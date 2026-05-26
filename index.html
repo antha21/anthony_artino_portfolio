@@ -38,7 +38,43 @@
       overflow-x: hidden;
       cursor: none;
     }
+
+    /* ── SCROLL PROGRESS ── */
+    #spbar{position:fixed;top:0;left:0;height:2px;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 8px var(--accent);z-index:10001;pointer-events:none;transition:width .06s linear}
  
+    /* ── LOADER (Xbox 360-style math orb) ── */
+    #loader{position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
+    #loader.out{animation:ldrOut .9s ease forwards}
+    @keyframes ldrOut{0%{opacity:1}60%{opacity:1}100%{opacity:0;visibility:hidden;pointer-events:none}}
+    #ldr-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+    .ldr-stage{display:flex;flex-direction:column;align-items:center;gap:40px;position:relative;z-index:1}
+    /* Orb scene */
+    .orb-scene{position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center}
+    .orb-radar{position:absolute;inset:20px;border-radius:50%;border:1px solid rgba(0,229,255,.5);opacity:0;animation:radarOut 2s var(--rd,.6s) ease-out infinite}
+    @keyframes radarOut{0%{transform:scale(.4);opacity:.7}100%{transform:scale(2.8);opacity:0}}
+    .orb-body{position:relative;width:110px;height:110px;opacity:0;animation:orbIn .6s .2s cubic-bezier(.34,1.56,.64,1) forwards}
+    @keyframes orbIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+    .orb-sphere{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(0,229,255,.22),rgba(0,229,255,.05) 55%,transparent);border:1.5px solid rgba(0,229,255,.55);box-shadow:0 0 24px rgba(0,229,255,.35),0 0 60px rgba(0,229,255,.15),0 0 100px rgba(0,229,255,.06),inset 0 0 24px rgba(0,229,255,.08);animation:sphBreath 2.2s ease-in-out infinite}
+    @keyframes sphBreath{0%,100%{box-shadow:0 0 24px rgba(0,229,255,.35),0 0 60px rgba(0,229,255,.15)}50%{box-shadow:0 0 40px rgba(0,229,255,.55),0 0 80px rgba(0,229,255,.28),0 0 130px rgba(0,229,255,.1)}}
+    /* Orbital rings */
+    .orb-ring-h{position:absolute;left:-10px;right:-10px;top:50%;height:32px;margin-top:-16px;border-radius:50%;border:1px solid rgba(0,229,255,.38);animation:rngH 3.8s linear infinite}
+    @keyframes rngH{to{transform:rotateZ(360deg)}}
+    .orb-ring-d{position:absolute;top:-10px;bottom:-10px;left:50%;width:32px;margin-left:-16px;border-radius:50%;border:1px solid rgba(127,255,140,.28);animation:rngD 5.2s linear infinite reverse}
+    @keyframes rngD{to{transform:rotateZ(360deg)}}
+    /* Orbiting math symbols */
+    .orb-sym-track{position:absolute;top:50%;left:50%;width:0;height:0;transform-origin:0 0;animation:trkSpin var(--dur,5s) linear infinite}
+    .orb-sym-track span{position:absolute;left:58px;top:-10px;font-family:var(--mono);font-size:13px;color:var(--sc,rgba(0,229,255,.72));font-weight:400;animation:symStay var(--dur,5s) linear infinite}
+    @keyframes trkSpin{from{transform:rotate(var(--s,0deg))}to{transform:rotate(calc(var(--s,0deg) + 360deg))}}
+    @keyframes symStay{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+    /* Loader text */
+    .ldr-name{font-family:var(--sans);font-size:26px;font-weight:800;color:#fff;letter-spacing:.05em;text-align:center;opacity:0;animation:fadeIn .5s 1.3s forwards}
+    .ldr-sub{font-family:var(--mono);font-size:11px;color:rgba(0,229,255,.6);letter-spacing:.2em;text-transform:uppercase;text-align:center;margin-top:6px;opacity:0;animation:fadeIn .5s 1.5s forwards}
+    .ldr-bar{width:200px;height:1px;background:rgba(255,255,255,.1);margin:28px auto 0;opacity:0;animation:fadeIn .3s 1.7s forwards}
+    .ldr-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 6px var(--accent);width:0%;animation:barFill .9s 1.8s cubic-bezier(.4,0,.2,1) forwards}
+    @keyframes barFill{to{width:100%}}
+    @keyframes fadeIn{to{opacity:1}}
+    
+    /* ── CURSOR ── */
     #cursor {
       width: 10px; height: 10px;
       background: var(--accent);
@@ -71,7 +107,7 @@
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
  
-    /* ─── NAV ─── */
+    /* ── NAV ── */
     nav {
       position: fixed; top: 0; left: 0; right: 0;
       z-index: 100;
@@ -105,7 +141,7 @@
       0%,100% { opacity: 1; box-shadow: 0 0 12px var(--accent); }
       50% { opacity: 0.5; box-shadow: 0 0 4px var(--accent); }
     }
-    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links { display: flex; gap: 32px; list-style: none; align-items: center; }
     .nav-links a {
       color: var(--text-dim);
       text-decoration: none;
@@ -137,14 +173,33 @@
     }
     .nav-cta:hover { background: var(--accent) !important; color: var(--bg) !important; }
     .nav-cta:hover::after { display: none !important; }
+
+    /* Secret pen button */
+    .pen-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-faint); width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: var(--radius); 
+      transition: color 0.3s, opacity 0.3s, transform 0.2s;
+      opacity: 0.25; padding: 0;
+    }
+    .pen-btn:hover { opacity: 0.9; color: var(--accent); transform: translateY(-2px); }
+    .pen-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .pen-btn.unlocked { opacity: 0.9; color: var(--accent2); }
  
-    /* ─── SECTIONS ─── */
+    /* ── SECTIONS & SCROLL ANIMATIONS ── */
     section { position: relative; z-index: 1; }
     .section-inner { max-width: 1100px; margin: 0 auto; padding: 0 48px; }
  
-    /* ─── HERO ─── */
+    .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.75s cubic-bezier(.16,1,.3,1), transform 0.75s cubic-bezier(.16,1,.3,1); }
+    .reveal-l { opacity: 0; transform: translateX(-44px); transition: opacity 0.75s cubic-bezier(.16,1,.3,1), transform 0.75s cubic-bezier(.16,1,.3,1); }
+    .reveal-r { opacity: 0; transform: translateX(44px); transition: opacity 0.75s cubic-bezier(.16,1,.3,1), transform 0.75s cubic-bezier(.16,1,.3,1); }
+    .reveal-s { opacity: 0; transform: scale(0.92) translateY(20px); transition: opacity 0.75s cubic-bezier(.16,1,.3,1), transform 0.75s cubic-bezier(.16,1,.3,1); }
+    .reveal.visible, .reveal-l.visible, .reveal-r.visible, .reveal-s.visible { opacity: 1; transform: none; }
+
+    /* ── HERO ── */
     #hero {
-      min-height: 100vh;
+      min-height: 110vh;
       display: flex; align-items: center;
       padding-top: 64px;
     }
@@ -176,7 +231,7 @@
       font-family: var(--sans);
       font-size: clamp(42px, 5vw, 68px);
       font-weight: 800;
-      line-height: 1.05;
+      line-height: 1.15;
       color: var(--white);
       margin-bottom: 16px;
       opacity: 0; animation: fadeUp 0.6s 0.35s forwards;
@@ -230,12 +285,106 @@
     }
     .btn-ghost:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
  
+    /* ── HERO RIGHT COLUMN ── */
+    .hero-right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      opacity: 0;
+      animation: fadeUp 0.7s 0.4s forwards;
+    }
+ 
+    /* ── PROFILE PHOTO ── */
+    .profile-photo-wrap {
+      position: relative;
+      width: 200px; height: 200px;
+      flex-shrink: 0;
+    }
+    .profile-photo-ring {
+      position: absolute; inset: -5px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent) 0%, var(--accent2) 33%, var(--accent3) 66%, var(--accent) 100%);
+      animation: spinRing 8s linear infinite;
+      padding: 2px;
+    }
+    @keyframes spinRing { to { transform: rotate(360deg); } }
+    .profile-photo-ring::after {
+      content: '';
+      position: absolute; inset: 3px;
+      border-radius: 50%;
+      background: var(--bg);
+    }
+    .profile-photo {
+      position: relative; z-index: 1;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: linear-gradient(135deg, var(--bg3) 0%, var(--surface) 100%);
+      border: 3px solid var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 48px rgba(0,229,255,0.12);
+    }
+    
+    .profile-initials {
+      font-family: var(--sans);
+      font-size: 54px;
+      font-weight: 800;
+      color: var(--accent);
+      opacity: 0.35;
+      letter-spacing: -2px;
+      line-height: 1;
+      user-select: none;
+    }
+    .profile-photo img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: 50% 20%; 
+      display: block;
+    }
+ 
+    /* ── ABOUT PROFILE ── */
+    .about-profile-img {
+      width: 160px; height: 160px;
+      border-radius: 12px;
+      margin-bottom: 28px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--bg3) 0%, var(--surface) 100%);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 24px rgba(0,229,255,0.08);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .about-profile-img:hover {
+      border-color: rgba(0,229,255,0.35);
+      box-shadow: 0 8px 32px rgba(0,229,255,0.14);
+    }
+    .about-profile-img img {
+      width: 100%; 
+      height: 100%;
+      object-fit: cover;
+      object-position: 60% 50%; 
+      display: block;
+    }
+    .about-initials {
+      font-family: var(--sans);
+      font-size: 44px;
+      font-weight: 800;
+      color: var(--accent);
+      opacity: 0.3;
+      letter-spacing: -2px;
+      line-height: 1;
+      user-select: none;
+    }
+ 
+    /* ── TERMINAL ── */
     .hero-terminal {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
-      opacity: 0; animation: fadeUp 0.7s 0.5s forwards;
+      width: 100%;
     }
     .terminal-bar {
       display: flex; align-items: center; gap: 8px;
@@ -261,7 +410,12 @@
     }
     @keyframes blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
  
-    /* ─── SECTION HEADER ─── */
+    /* ── SECTION HEADER & ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
     .section-header {
       display: flex; align-items: baseline; gap: 20px;
       margin-bottom: 56px;
@@ -272,12 +426,24 @@
       font-size: clamp(28px, 3vw, 38px);
       font-weight: 800;
       color: var(--white);
+      line-height: 1.2;
     }
-    .section-line { flex: 1; height: 1px; background: var(--border); max-width: 200px; }
+    /* Expanding line animation for top sections */
+    .section-line { 
+      flex: 1; height: 1px; background: var(--border); max-width: 200px; 
+      transform-origin: left; transform: scaleX(0); 
+      transition: transform 0.8s 0.2s cubic-bezier(0.16, 1, 0.3, 1); 
+    }
+    .section-header.visible .section-line { transform: scaleX(1); }
  
-    /* ─── ABOUT ─── */
+    /* ── ABOUT ── */
     #about { padding: 120px 0; }
-    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+    }
     .about-text p { color: var(--text); font-size: 14px; line-height: 1.9; margin-bottom: 20px; }
     .about-text p strong { color: var(--accent2); font-weight: 500; }
     .about-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 32px; }
@@ -306,7 +472,7 @@
     .tl-item.alt::before { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
     .tl-year { font-size: 10px; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px; }
     .tl-item.alt .tl-year { color: var(--accent2); }
-    .tl-title { font-family: var(--sans); font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+    .tl-title { font-family: var(--sans); font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 4px; line-height: 1.3; }
     .tl-sub { font-size: 12px; color: var(--text-dim); }
     .tl-badge {
       display: inline-block; font-size: 9px; letter-spacing: 0.12em;
@@ -318,7 +484,7 @@
       background: rgba(127,255,140,0.08); border-color: rgba(127,255,140,0.2); color: var(--accent2);
     }
  
-    /* ─── SKILLS ─── */
+    /* ── SKILLS ── */
     #skills { padding: 120px 0; background: var(--bg2); }
     .skills-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
     .skill-group {
@@ -327,8 +493,10 @@
       transition: border-color 0.2s, transform 0.2s;
     }
     .skill-group:hover { border-color: var(--accent); transform: translateY(-3px); }
-    .sg-icon { font-size: 22px; margin-bottom: 12px; display: block; }
-    .sg-label { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--white); margin-bottom: 20px; }
+    .sg-icon { width: 28px; height: 28px; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; color: var(--accent); }
+    .sg-icon svg { width: 22px; height: 22px; stroke: var(--accent); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .sg-icon-char { font-size: 20px; font-family: var(--mono); color: var(--accent); line-height: 1; font-weight: 700; }
+    .sg-label { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--white); margin-bottom: 20px; line-height: 1.3; }
     .skill-bar-wrap { margin-bottom: 12px; }
     .skill-bar-top { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
     .skill-bar-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
@@ -356,7 +524,7 @@
     .cert-name { font-size: 12px; color: var(--white); font-weight: 500; line-height: 1.4; }
     .cert-date { font-size: 10px; color: var(--text-faint); margin-top: 6px; }
  
-    /* ─── EXPERIENCE ─── */
+    /* ── EXPERIENCE ── */
     #experience { padding: 120px 0; }
     .exp-list { display: flex; flex-direction: column; gap: 4px; }
     .exp-item { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
@@ -370,7 +538,7 @@
       transition: background 0.2s;
     }
     .exp-header:hover { background: var(--bg3); }
-    .exp-role { font-family: var(--sans); font-size: 16px; font-weight: 700; color: var(--white); }
+    .exp-role { font-family: var(--sans); font-size: 16px; font-weight: 700; color: var(--white); line-height: 1.3; }
     .exp-company { font-size: 12px; color: var(--accent); margin-top: 3px; }
     .exp-loc { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
     .exp-date { font-size: 11px; color: var(--text-dim); white-space: nowrap; text-align: right; }
@@ -394,60 +562,127 @@
       border: 1px solid var(--border);
     }
  
-    /* ─── PROJECTS ─── */
+    /* ── PROJECTS PORTALS ── */
     #projects { padding: 120px 0; background: var(--bg2); }
-    .proj-category { margin-bottom: 56px; }
-    .proj-category-label {
-      display: flex; align-items: center; gap: 16px;
-      margin-bottom: 28px;
+ 
+    .projects-intro {
+      font-size: 14px;
+      color: var(--text-dim);
+      line-height: 1.8;
+      max-width: 620px;
+      margin-bottom: 52px;
     }
-    .proj-category-label span {
-      font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
-      color: var(--text-dim); white-space: nowrap;
+ 
+    .proj-portals {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
     }
-    .proj-category-label::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-    .projects-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .projects-grid.two-col { grid-template-columns: repeat(2, 1fr); }
-    .project-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; padding: 28px;
-      display: flex; flex-direction: column; gap: 14px;
+ 
+    .proj-portal {
+      display: flex; flex-direction: column;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 40px 32px 32px;
+      text-decoration: none;
       position: relative; overflow: hidden;
-      transition: border-color 0.3s, transform 0.3s;
+      transition: border-color 0.35s, transform 0.35s, box-shadow 0.35s;
+      cursor: pointer;
+      min-height: 380px;
     }
-    .project-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0;
-      height: 2px; background: var(--accent);
-      transform: scaleX(0); transition: transform 0.3s;
+    .proj-portal::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--pc, var(--accent));
+      transform: scaleX(0);
+      transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
       transform-origin: left;
     }
-    .project-card:hover { border-color: var(--accent); transform: translateY(-4px); }
-    .project-card:hover::before { transform: scaleX(1); }
-    .project-card.alt::before { background: var(--accent2); }
-    .project-card.alt:hover { border-color: var(--accent2); }
-    .project-card.alt3::before { background: var(--accent3); }
-    .project-card.alt3:hover { border-color: var(--accent3); }
-    .proj-icon { font-size: 24px; line-height: 1; }
-    .proj-meta { display: flex; align-items: center; gap: 8px; }
-    .proj-year { font-size: 10px; color: var(--text-faint); letter-spacing: 0.1em; }
-    .proj-affil { font-size: 10px; color: var(--accent); }
-    .proj-title { font-family: var(--sans); font-size: 16px; font-weight: 700; color: var(--white); }
-    .proj-desc { font-size: 12px; color: var(--text-dim); line-height: 1.7; flex: 1; }
-    .proj-stack { display: flex; flex-wrap: wrap; gap: 6px; }
-    .proj-tag {
-      font-size: 10px; padding: 3px 8px; border-radius: 3px;
-      background: rgba(0,229,255,0.08); color: var(--accent);
-      border: 1px solid rgba(0,229,255,0.2);
+    .proj-portal::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; top: 0;
+      background: radial-gradient(ellipse at 50% -20%, rgba(0,0,0,0.12) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s;
+      pointer-events: none;
     }
-    .proj-tag.g { background: rgba(127,255,140,0.08); color: var(--accent2); border-color: rgba(127,255,140,0.2); }
-    .proj-tag.o { background: rgba(255,107,53,0.08); color: var(--accent3); border-color: rgba(255,107,53,0.2); }
-    .proj-links { display: flex; gap: 12px; }
-    .proj-link { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
-    .proj-link:hover { color: var(--accent); }
+    .proj-portal:hover {
+      border-color: var(--pc, var(--accent));
+      transform: translateY(-10px);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    }
+    .proj-portal:hover::before { transform: scaleX(1); }
+    .proj-portal:hover::after { opacity: 1; }
  
-    /* ─── CONTACT ─── */
+    .portal-glow {
+      position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--pc, var(--accent)), transparent 70%);
+      opacity: 0.06;
+      pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    .proj-portal:hover .portal-glow { opacity: 0.14; }
+ 
+    /* Project SVG Icon Styles */
+    .portal-icon {
+      width: 48px; height: 48px;
+      margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--pc, var(--accent));
+      filter: drop-shadow(0 0 12px rgba(255,255,255,0.1));
+    }
+    .portal-icon svg {
+      width: 40px; height: 40px;
+      stroke: var(--pc, var(--accent));
+      fill: none;
+      stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    .portal-category {
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--pc, var(--accent));
+      margin-bottom: 10px;
+    }
+    .portal-title {
+      font-family: var(--sans);
+      font-size: clamp(22px, 2.5vw, 28px);
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 18px;
+    }
+    .portal-desc {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.75;
+      flex: 1;
+      margin-bottom: 28px;
+    }
+    .portal-count {
+      font-size: 10px;
+      color: var(--text-faint);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .portal-arrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px;
+      font-family: var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--pc, var(--accent));
+      transition: gap 0.25s;
+    }
+    .proj-portal:hover .portal-arrow { gap: 14px; }
+ 
+    /* ── CONTACT ── */
     #contact { padding: 120px 0; }
     .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
     .contact-intro { font-family: var(--sans); font-size: clamp(26px, 3vw, 38px); font-weight: 800; color: var(--white); line-height: 1.2; margin-bottom: 20px; }
@@ -462,7 +697,8 @@
       font-size: 13px; transition: border-color 0.2s, color 0.2s, transform 0.2s;
     }
     .contact-link:hover { border-color: var(--accent); color: var(--accent); transform: translateX(4px); }
-    .contact-link-icon { font-size: 16px; }
+    .contact-link-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .contact-link-icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
     .contact-form { display: flex; flex-direction: column; gap: 16px; }
     .form-group { display: flex; flex-direction: column; gap: 8px; }
     .form-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); }
@@ -475,7 +711,7 @@
     .form-control:focus { border-color: var(--accent); }
     .form-control::placeholder { color: var(--text-faint); }
  
-    /* ─── FOOTER ─── */
+    /* ── FOOTER ── */
     footer {
       background: var(--bg); border-top: 1px solid var(--border);
       padding: 48px 0; position: relative; z-index: 1;
@@ -495,22 +731,16 @@
     }
     .footer-copy { font-size: 11px; color: var(--text-faint); }
     .footer-copy span { color: var(--accent); }
-    .footer-socials { display: flex; gap: 12px; }
+    .footer-socials { display: flex; gap: 12px; align-items: center; }
     .social-btn {
       display: flex; align-items: center; justify-content: center;
       width: 32px; height: 32px;
       border: 1px solid var(--border); border-radius: var(--radius);
       font-size: 13px; text-decoration: none; color: var(--text-dim);
-      transition: border-color 0.2s, color 0.2s;
+      transition: border-color 0.2s, color 0.2s, transform 0.2s;
     }
-    .social-btn:hover { border-color: var(--accent); color: var(--accent); }
- 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.7s, transform 0.7s; }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .social-btn svg { width: 14px; height: 14px; fill: currentColor; }
+    .social-btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
  
     .grid-bg {
       position: absolute; inset: 0;
@@ -529,25 +759,150 @@
       letter-spacing: 0.08em; margin-bottom: 20px;
     }
     .status-dot { width: 6px; height: 6px; background: var(--accent2); border-radius: 50%; animation: pulse 2s infinite; }
+
+    /* ── BLACK-SCHOLES MODAL ── */
+    .bsp-modal{position:fixed;inset:0;z-index:99998;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+    .bsp-modal.open{opacity:1;visibility:visible}
+    .bsp-overlay{position:absolute;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(8px)}
+    .bsp-box{position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:56px 64px;display:flex;flex-direction:column;align-items:center;gap:0;box-shadow:0 0 80px rgba(0,229,255,.08)}
+    .bsp-equation{display:flex;align-items:center;gap:6px;font-family:var(--mono);color:var(--white);font-size:clamp(13px,2vw,17px);flex-wrap:wrap;justify-content:center;line-height:1}
+    .bsp-frac{display:inline-flex;flex-direction:column;align-items:center;gap:2px;margin:0 2px;vertical-align:middle}
+    .bsp-frac .bsp-num{border-bottom:1px solid rgba(255,255,255,.5);padding:0 3px;font-size:.9em}
+    .bsp-frac .bsp-den{padding:0 3px;font-size:.9em}
+    .bsp-op{color:var(--text-dim);margin:0 4px}
+    .bsp-sup{font-size:.65em;vertical-align:super;line-height:0}
+    .bsp-eq-sign{color:var(--accent);margin:0 8px;font-size:1.2em}
+    .bsp-input{background:transparent;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:inherit;width:48px;text-align:center;outline:none;padding:2px 4px;margin-left:6px}
+    .bsp-input::placeholder{color:var(--text-faint)}
+    .bsp-input.shake{animation:bspShake .3s ease}
+    @keyframes bspShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+    /* ── DRAWING CANVAS SYSTEM ── */
+    .draw-canvas-overlay{position:absolute;inset:0;border-radius:inherit;cursor:crosshair;z-index:10;touch-action:none}
+    #draw-toolbar{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:9997;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 8px 40px rgba(0,0,0,.6);opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s,transform .3s;transform:translateX(-50%) translateY(10px)}
+    #draw-toolbar.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+    .draw-tb-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);white-space:nowrap}
+    .draw-tb-sep{width:1px;height:24px;background:var(--border)}
+    .draw-sizes{display:flex;align-items:center;gap:8px}
+    .draw-sz{width:24px;height:24px;border-radius:50%;border:1px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .2s}
+    .draw-sz.active,.draw-sz:hover{border-color:var(--accent)}
+    .draw-sz-dot{border-radius:50%;background:var(--white);pointer-events:none}
+    .draw-colors{display:flex;gap:6px}
+    .draw-col{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:border-color .15s,transform .15s}
+    .draw-col.active,.draw-col:hover{border-color:var(--white);transform:scale(1.15)}
+    .draw-eraser{background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:4px;cursor:pointer;transition:border-color .2s,color .2s}
+    .draw-eraser:hover,.draw-eraser.active{border-color:var(--accent);color:var(--accent)}
+    .draw-clear{background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:4px;cursor:pointer;transition:border-color .2s,color .2s}
+    .draw-clear:hover{border-color:var(--accent3);color:var(--accent3)}
+    .draw-exit{background:var(--surface);border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:4px;cursor:pointer;transition:border-color .2s,color .2s}
+    .draw-exit:hover{border-color:var(--white);color:var(--white)}
  
+    /* ── MOBILE ── */
     @media (max-width: 900px) {
-      nav { padding: 0 24px; }
+      body { cursor: auto; }
+      #cursor, #cursor-ring { display: none; }
+      nav { padding: 0 20px; }
       .nav-links { display: none; }
-      .hero-grid, .about-grid, .contact-grid { grid-template-columns: 1fr; }
-      .skills-grid, .projects-grid, .certs-grid { grid-template-columns: 1fr; }
-      .projects-grid.two-col { grid-template-columns: 1fr; }
+      .hero-grid, .about-grid, .contact-grid { grid-template-columns: 1fr; gap: 40px; }
+      .hero-grid { padding: 0 20px; }
+      .hero-right { width: 100%; }
+      .profile-photo-wrap { width: 160px; height: 160px; }
+      .profile-photo { width: 160px; height: 160px; }
+      .skills-grid { grid-template-columns: 1fr; }
+      .proj-portals { grid-template-columns: 1fr; }
+      .certs-grid { grid-template-columns: 1fr 1fr; }
       .footer-grid { grid-template-columns: 1fr 1fr; }
-      .section-inner, .hero-grid { padding: 0 24px; }
+      .section-inner { padding: 0 20px; }
+      .about-profile-img { width: 130px; height: 130px; }
+      #about { padding: 80px 0; }
+      #skills, #experience, #projects, #contact { padding: 80px 0; }
+      .proj-portal { min-height: auto; padding: 28px 24px; }
+      .bsp-box { padding: 40px 28px; }
+    }
+    @media (max-width: 480px) {
+      .certs-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; }
+      .hero-actions { flex-direction: column; }
+      .hero-actions .btn { text-align: center; justify-content: center; }
     }
   </style>
 </head>
 <body>
+
+<div id="spbar"></div>
+ 
+<div id="loader">
+  <canvas id="ldr-canvas"></canvas>
+  <div class="ldr-stage">
+    <div class="orb-scene">
+      <div class="orb-radar" style="--rd:.6s"></div>
+      <div class="orb-radar" style="--rd:.9s"></div>
+      <div class="orb-radar" style="--rd:1.2s"></div>
+      <div class="orb-body">
+        <div class="orb-sphere"></div>
+        <div class="orb-ring-h"></div>
+        <div class="orb-ring-d"></div>
+        <div class="orb-sym-track" style="--s:0deg;--dur:5.5s"><span>∫</span></div>
+        <div class="orb-sym-track" style="--s:120deg;--dur:5.5s"><span>Σ</span></div>
+        <div class="orb-sym-track" style="--s:240deg;--dur:5.5s"><span>π</span></div>
+        <div class="orb-sym-track" style="--s:60deg;--dur:8.5s;--sc:rgba(127,255,140,.7)"><span>∂</span></div>
+        <div class="orb-sym-track" style="--s:195deg;--dur:8.5s;--sc:rgba(127,255,140,.7)"><span>λ</span></div>
+        <div class="orb-sym-track" style="--s:330deg;--dur:8.5s;--sc:rgba(255,107,53,.65)"><span>∇</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="ldr-name">Anthony Artino</div>
+      <div class="ldr-sub">Portfolio</div>
+      <div class="ldr-bar"><div class="ldr-bar-fill"></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="bsp-modal" class="bsp-modal">
+  <div class="bsp-overlay" onclick="closeBSP()"></div>
+  <div class="bsp-box">
+    <div class="bsp-equation">
+      <span class="bsp-frac"><span class="bsp-num">∂V</span><span class="bsp-den">∂t</span></span>
+      <span class="bsp-op">+</span>
+      <span>½σ²S²</span>
+      <span class="bsp-frac"><span class="bsp-num">∂²V</span><span class="bsp-den">∂S²</span></span>
+      <span class="bsp-op">+</span>
+      <span>rS</span>
+      <span class="bsp-frac"><span class="bsp-num">∂V</span><span class="bsp-den">∂S</span></span>
+      <span class="bsp-op">−</span>
+      <span>rV</span>
+      <span class="bsp-eq-sign">=</span>
+      <input type="text" id="bsp-answer" class="bsp-input" maxlength="10" autocomplete="off" spellcheck="false"/>
+    </div>
+  </div>
+</div>
+
+<div id="draw-toolbar">
+  <span class="draw-tb-label">Draw</span>
+  <div class="draw-tb-sep"></div>
+  <div class="draw-sizes" id="draw-sizes">
+    <button class="draw-sz active" data-sz="2"><div class="draw-sz-dot" style="width:4px;height:4px"></div></button>
+    <button class="draw-sz" data-sz="6"><div class="draw-sz-dot" style="width:8px;height:8px"></div></button>
+    <button class="draw-sz" data-sz="14"><div class="draw-sz-dot" style="width:14px;height:14px"></div></button>
+  </div>
+  <div class="draw-tb-sep"></div>
+  <div class="draw-colors" id="draw-colors">
+    <button class="draw-col active" data-color="#00e5ff" style="background:#00e5ff"></button>
+    <button class="draw-col" data-color="#7fff8c" style="background:#7fff8c"></button>
+    <button class="draw-col" data-color="#ff6b35" style="background:#ff6b35"></button>
+    <button class="draw-col" data-color="#f0f6fc" style="background:#f0f6fc"></button>
+    <button class="draw-col" data-color="#ffb700" style="background:#ffb700"></button>
+  </div>
+  <div class="draw-tb-sep"></div>
+  <button class="draw-eraser" id="draw-eraser">Eraser</button>
+  <button class="draw-clear" onclick="clearAllCanvases()">Clear</button>
+  <button class="draw-exit" onclick="exitDrawMode()">Exit</button>
+</div>
  
 <div id="cursor"></div>
 <div id="cursor-ring"></div>
 <canvas id="bg-canvas"></canvas>
  
-<!-- ── NAV ── -->
 <nav id="navbar">
   <a href="#hero" class="nav-logo">Anthony Artino</a>
   <ul class="nav-links">
@@ -559,10 +914,10 @@
   </ul>
 </nav>
  
-<!-- ── HERO ── -->
 <section id="hero">
   <div class="grid-bg"></div>
   <div class="hero-grid">
+ 
     <div>
       <div class="status-badge">
         <span class="status-dot"></span>
@@ -574,8 +929,9 @@
         <strong>Applied Mathematician &amp; Data Analyst</strong><br />
         turning equations into solutions
       </p>
+
       <p class="hero-bio">
-	I build intelligent systems at the intersection of mathematics, software engineering, and data science by transforming raw numbers into decisions that matter.
+        I build intelligent systems at the intersection of mathematics, software engineering, and data science by transforming raw numbers into decisions that matter.
       </p>
       <div class="hero-actions">
         <a href="#projects" class="btn btn-primary">View My Work</a>
@@ -583,35 +939,44 @@
       </div>
     </div>
  
-    <div class="hero-terminal">
-      <div class="terminal-bar">
-        <span class="terminal-dot d1"></span>
-        <span class="terminal-dot d2"></span>
-        <span class="terminal-dot d3"></span>
-        <span class="terminal-title">profile.json — anthony_artino</span>
+    <div class="hero-right">
+  
+    <div class="profile-photo-wrap">
+    	<div class="profile-photo-ring"></div>
+    	<div class="profile-photo" id="hero-photo-container">
+        <img src="A_Arti_F25 (1).jpg" alt="Anthony Artino">
       </div>
-      <div class="terminal-body">
-        <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">cat profile.json</span></div>
-        <br />
-        <div class="t-line"><span class="t-output">{</span></div>
-        <div class="t-line"><span class="t-output">&nbsp;&nbsp;"name": <span class="t-val">"Anthony Artino"</span>,</span></div>
-	<div class="t-line"><span class="t-output">&nbsp;&nbsp;"role": <span class="t-val2">"Analytics Specialist"</span>,</span></div>
-        <div class="t-line"><span class="t-output">&nbsp;&nbsp;"degree": <span class="t-val">"B.S. Applied Mathematics"</span>,</span></div>
-        <div class="t-line"><span class="t-output">&nbsp;&nbsp;"honor": <span class="t-val2">"Magna Cum Laude"</span>,</span></div>
-        <div class="t-line"><span class="t-output">&nbsp;&nbsp;"grad_program": <span class="t-val">"M.S. Business Analytics"</span>,</span></div>
-        <div class="t-line"><span class="t-output">&nbsp;&nbsp;"languages": [</span></div>
-        <div class="t-line"><span class="t-output">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-val2">"Python"</span>, <span class="t-val2">"R"</span>, <span class="t-val2">"SQL"</span>, <span class="t-val2">"MATLAB"</span>, <span class="t-val2">"JavaScript"</span></span></div>
-        <div class="t-line"><span class="t-output">&nbsp;&nbsp;],</span></div>
-        <div class="t-line"><span class="t-output">&nbsp;&nbsp;"status": <span class="t-val">"open_to_work"</span></span></div>
-        <div class="t-line"><span class="t-output">}</span></div>
-        <br />
-        <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">&nbsp;<span class="t-cursor"></span></span></div>
+    </div>  
+
+      <div class="hero-terminal">
+        <div class="terminal-bar">
+          <span class="terminal-dot d1"></span>
+          <span class="terminal-dot d2"></span>
+          <span class="terminal-dot d3"></span>
+          <span class="terminal-title">profile.json — anthony_artino</span>
+        </div>
+        <div class="terminal-body">
+          <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">cat profile.json</span></div>
+          <br />
+          <div class="t-line"><span class="t-output">{</span></div>
+          <div class="t-line"><span class="t-output">&nbsp;&nbsp;"name": <span class="t-val">"Anthony Artino"</span>,</span></div>
+          <div class="t-line"><span class="t-output">&nbsp;&nbsp;"role": <span class="t-val2">"Analytics Specialist"</span>,</span></div>
+          <div class="t-line"><span class="t-output">&nbsp;&nbsp;"degree": <span class="t-val">"B.S. Applied Mathematics"</span>,</span></div>
+          <div class="t-line"><span class="t-output">&nbsp;&nbsp;"honor": <span class="t-val2">"Magna Cum Laude"</span>,</span></div>
+          <div class="t-line"><span class="t-output">&nbsp;&nbsp;"grad_program": <span class="t-val">"M.S. Business Analytics"</span>,</span></div>
+          <div class="t-line"><span class="t-output">&nbsp;&nbsp;"languages": [</span></div>
+          <div class="t-line"><span class="t-output">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-val2">"Python"</span>, <span class="t-val2">"R"</span>, <span class="t-val2">"SQL"</span>, <span class="t-val2">"MATLAB"</span>, <span class="t-val2">"JavaScript"</span></span></div>
+          <div class="t-line"><span class="t-output">&nbsp;&nbsp;],</span></div>
+          <div class="t-line"><span class="t-output">&nbsp;&nbsp;"status": <span class="t-val">"open_to_work"</span></span></div>
+          <div class="t-line"><span class="t-output">}</span></div>
+          <br />
+          <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">&nbsp;<span class="t-cursor"></span></span></div>
+        </div>
       </div>
-    </div>
-  </div>
+ 
+    </div></div>
 </section>
  
-<!-- ── ABOUT ── -->
 <section id="about">
   <div class="section-inner">
     <div class="section-header reveal">
@@ -620,7 +985,11 @@
       <div class="section-line"></div>
     </div>
     <div class="about-grid">
-      <div class="about-text reveal">
+ 
+    <div class="about-text reveal-l">
+      <div class="about-profile-img" id="about-photo-container">
+        <img src="20260508_204841.jpg" alt="Anthony Artino">
+      </div> 
         <p>
           My name is <strong>Anthony Artino</strong>. I'm a recent graduate of Kent State University, where I earned my <strong>B.S. in Applied Mathematics magna cum laude (3.857 GPA)</strong> with dual concentrations in Probability &amp; Statistics and Financial Mathematics, alongside minors in Computer Science and Digital Media Production.
         </p>
@@ -631,26 +1000,26 @@
           I am proficient in <strong>Python, MATLAB, R, SQL, C++, JavaScript, and Excel</strong> which all applied to real-world projects ranging from bioeconomic simulations to interactive educational platforms. I'm driven by the challenge of turning theoretical math into tangible impact.
         </p>
         <div class="about-facts">
-          <div class="fact-card">
+          <div class="fact-card reveal-s">
             <div class="fact-num">3.86</div>
             <div class="fact-label">Undergrad GPA</div>
           </div>
-          <div class="fact-card">
-            <div class="fact-num">4.0</div>
+          <div class="fact-card reveal-s">
+            <div class="fact-num">4.00</div>
             <div class="fact-label">Graduate GPA</div>
           </div>
-          <div class="fact-card">
+          <div class="fact-card reveal-s">
             <div class="fact-num">10+</div>
             <div class="fact-label">Projects Completed</div>
           </div>
-          <div class="fact-card">
+          <div class="fact-card reveal-s">
             <div class="fact-num">13+</div>
             <div class="fact-label">Certifications</div>
           </div>
         </div>
       </div>
  
-      <div class="reveal">
+      <div class="reveal-r">
         <h3 style="font-family:var(--sans);font-size:15px;font-weight:700;color:var(--white);margin-bottom:24px;">Education</h3>
         <div class="timeline">
           <div class="tl-item alt">
@@ -690,7 +1059,7 @@
           <span class="tag">Machine Learning</span>
           <span class="tag">Data Visualization</span>
           <span class="tag">Optimization</span>
-	  <span class="tag">Statistics</span>
+          <span class="tag">Statistics</span>
           <span class="tag">Data Mining</span>
         </div>
       </div>
@@ -698,7 +1067,6 @@
   </div>
 </section>
  
-<!-- ── SKILLS ── -->
 <section id="skills">
   <div class="section-inner">
     <div class="section-header reveal">
@@ -708,8 +1076,8 @@
     </div>
  
     <div class="skills-grid">
-      <div class="skill-group reveal">
-        <span class="sg-icon">⌨️</span>
+      <div class="skill-group reveal-s">
+        <div class="sg-icon"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
         <div class="sg-label">Programming Languages</div>
         <div class="skill-bar-wrap">
           <div class="skill-bar-top"><span>Python</span><span>95%</span></div>
@@ -737,8 +1105,8 @@
         </div>
       </div>
  
-      <div class="skill-group reveal">
-        <span class="sg-icon">∑</span>
+      <div class="skill-group reveal-s">
+        <div class="sg-icon"><span class="sg-icon-char">∑</span></div>
         <div class="sg-label">Mathematics &amp; Statistics</div>
         <div class="skill-bar-wrap">
           <div class="skill-bar-top"><span>Differential Equations (ODEs/SPDEs)</span><span>96%</span></div>
@@ -762,8 +1130,8 @@
         </div>
       </div>
  
-      <div class="skill-group reveal">
-        <span class="sg-icon">📊</span>
+      <div class="skill-group reveal-s">
+        <div class="sg-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
         <div class="sg-label">Analytics &amp; BI Tools</div>
         <div class="skill-bar-wrap">
           <div class="skill-bar-top"><span>Microsoft Excel (PivotTables, VBA)</span><span>92%</span></div>
@@ -781,15 +1149,14 @@
           <div class="skill-bar-top"><span>A/B Testing &amp; Experimentation</span><span>82%</span></div>
           <div class="skill-bar-track"><div class="skill-bar-fill orange" data-w="82"></div></div>
         </div>
-	<div class="skill-bar-wrap">
-          <div class="skill-bar-top"><span>PowerBI </span><span>75%</span></div>
-          <div class="skill-bar-track"><div class="skill-bar-fill orange" data-w="82"></div></div>
+        <div class="skill-bar-wrap">
+          <div class="skill-bar-top"><span>PowerBI</span><span>75%</span></div>
+          <div class="skill-bar-track"><div class="skill-bar-fill orange" data-w="75"></div></div>
         </div>
-
       </div>
  
-      <div class="skill-group reveal">
-        <span class="sg-icon">🐍</span>
+      <div class="skill-group reveal-s">
+        <div class="sg-icon"><svg viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div>
         <div class="sg-label">Python Libraries &amp; Frameworks</div>
         <div class="tool-tags">
           <span class="tag">NumPy</span><span class="tag">Pandas</span>
@@ -800,8 +1167,8 @@
         </div>
       </div>
  
-      <div class="skill-group reveal">
-        <span class="sg-icon">🎯</span>
+      <div class="skill-group reveal-s">
+        <div class="sg-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
         <div class="sg-label">Domain Expertise</div>
         <div class="tool-tags">
           <span class="tag">Bioeconomic Modeling</span>
@@ -810,15 +1177,15 @@
           <span class="tag">Cellular Automata</span>
           <span class="tag">Supply Chain Analytics</span>
           <span class="tag">ArcGIS Pro</span>
-          <span class="tag">Six Sigma (White & Yellow Belt)</span>
+          <span class="tag">Six Sigma (White &amp; Yellow Belt)</span>
           <span class="tag">AI &amp; Gen AI</span>
           <span class="tag">Project Management</span>
           <span class="tag">Prompt Engineering</span>
         </div>
       </div>
  
-      <div class="skill-group reveal">
-        <span class="sg-icon">💬</span>
+      <div class="skill-group reveal-s">
+        <div class="sg-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
         <div class="sg-label">Professional Skills</div>
         <div class="tool-tags">
           <span class="tag">Academic Seminar Presentations</span>
@@ -833,78 +1200,28 @@
       </div>
     </div>
  
-    <!-- Certifications -->
     <div class="section-header reveal" style="margin-top:80px;">
       <span class="section-num">02b //</span>
       <h2 class="section-title" style="font-size:clamp(20px,2vw,26px);">Certifications</h2>
       <div class="section-line"></div>
     </div>
     <div class="certs-grid">
-      <div class="cert-card reveal">
-        <div class="cert-issuer">uCertify</div>
-        <div class="cert-name">Oracle Database SQL</div>
-        <div class="cert-date">Oct 2025 · ID: TYCW3KZB</div>
-      </div>
-      <div class="cert-card reveal">
-        <div class="cert-issuer">The Global Career Accelerator</div>
-        <div class="cert-name">Data Visualization Certification</div>
-        <div class="cert-date">Aug 2025 · Tableau · Data Viz</div>
-      </div>
-      <div class="cert-card reveal">
-        <div class="cert-issuer">The Global Career Accelerator</div>
-        <div class="cert-name">AI Professional Skills Certification</div>
-        <div class="cert-date">Aug 2025 · Prompt Engineering · AI Literacy</div>
-      </div>
-      <div class="cert-card reveal">
-        <div class="cert-issuer">The Global Career Accelerator</div>
-        <div class="cert-name">Data Analysis Certification</div>
-        <div class="cert-date">Jul 2025 · Excel · Analytics</div>
-      </div>
-      <div class="cert-card reveal">
-        <div class="cert-issuer">CSSC</div>
-        <div class="cert-name">Six Sigma Yellow Belt</div>
-        <div class="cert-date">Jun 2025 · ID: De28EjvvZn</div>
-      </div>
-      <div class="cert-card reveal">
-        <div class="cert-issuer">CSSC</div>
-        <div class="cert-name">Six Sigma White Belt</div>
-        <div class="cert-date">Jun 2025 · ID: IDv50eSiTm</div>
-      </div>
-      <div class="cert-card reveal">
-        <div class="cert-issuer">Wolfram Research</div>
-        <div class="cert-name">Statistics Foundations Professional Certificate</div>
-        <div class="cert-date">May 2025 · Wolfram Language</div>
-      </div>
-      <div class="cert-card reveal">
-        <div class="cert-issuer">Microsoft &amp; LinkedIn</div>
-        <div class="cert-name">Career Essentials in Generative AI</div>
-        <div class="cert-date">May 2025 · Copilot · Responsible AI</div>
-      </div>
-      <div class="cert-card reveal">
-        <div class="cert-issuer">Anaconda, Inc.</div>
-        <div class="cert-name">Python for Data Science Professional Certificate</div>
-        <div class="cert-date">May 2025 · Python · Data Analysis</div>
-      </div>
-      <div class="cert-card reveal">
-        <div class="cert-issuer">OpenEDG Python Institute</div>
-        <div class="cert-name">Programming with Python Professional Certificate</div>
-        <div class="cert-date">May 2025 · Python · OOP</div>
-      </div>
-      <div class="cert-card reveal">
-        <div class="cert-issuer">Microsoft &amp; LinkedIn</div>
-        <div class="cert-name">Career Essentials in Data Analysis</div>
-        <div class="cert-date">May 2025 · Analytics · Visualization</div>
-      </div>
-      <div class="cert-card reveal">
-        <div class="cert-issuer">The Global Career Accelerator</div>
-        <div class="cert-name">Intercultural Skills Certification</div>
-        <div class="cert-date">Aug 2025 · Collaboration · Communication</div>
-      </div>
+      <div class="cert-card reveal"><div class="cert-issuer">uCertify</div><div class="cert-name">Oracle Database SQL</div><div class="cert-date">Oct 2025 · ID: TYCW3KZB</div></div>
+      <div class="cert-card reveal"><div class="cert-issuer">The Global Career Accelerator</div><div class="cert-name">Data Visualization Certification</div><div class="cert-date">Aug 2025 · Tableau · Data Viz</div></div>
+      <div class="cert-card reveal"><div class="cert-issuer">The Global Career Accelerator</div><div class="cert-name">AI Professional Skills Certification</div><div class="cert-date">Aug 2025 · Prompt Engineering · AI Literacy</div></div>
+      <div class="cert-card reveal"><div class="cert-issuer">The Global Career Accelerator</div><div class="cert-name">Data Analysis Certification</div><div class="cert-date">Jul 2025 · Excel · Analytics</div></div>
+      <div class="cert-card reveal"><div class="cert-issuer">CSSC</div><div class="cert-name">Six Sigma Yellow Belt</div><div class="cert-date">Jun 2025 · ID: De28EjvvZn</div></div>
+      <div class="cert-card reveal"><div class="cert-issuer">CSSC</div><div class="cert-name">Six Sigma White Belt</div><div class="cert-date">Jun 2025 · ID: IDv50eSiTm</div></div>
+      <div class="cert-card reveal"><div class="cert-issuer">Wolfram Research</div><div class="cert-name">Statistics Foundations Professional Certificate</div><div class="cert-date">May 2025 · Wolfram Language</div></div>
+      <div class="cert-card reveal"><div class="cert-issuer">Microsoft &amp; LinkedIn</div><div class="cert-name">Career Essentials in Generative AI</div><div class="cert-date">May 2025 · Copilot · Responsible AI</div></div>
+      <div class="cert-card reveal"><div class="cert-issuer">Anaconda, Inc.</div><div class="cert-name">Python for Data Science Professional Certificate</div><div class="cert-date">May 2025 · Python · Data Analysis</div></div>
+      <div class="cert-card reveal"><div class="cert-issuer">OpenEDG Python Institute</div><div class="cert-name">Programming with Python Professional Certificate</div><div class="cert-date">May 2025 · Python · OOP</div></div>
+      <div class="cert-card reveal"><div class="cert-issuer">Microsoft &amp; LinkedIn</div><div class="cert-name">Career Essentials in Data Analysis</div><div class="cert-date">May 2025 · Analytics · Visualization</div></div>
+      <div class="cert-card reveal"><div class="cert-issuer">The Global Career Accelerator</div><div class="cert-name">Intercultural Skills Certification</div><div class="cert-date">Aug 2025 · Collaboration · Communication</div></div>
     </div>
   </div>
 </section>
  
-<!-- ── EXPERIENCE ── -->
 <section id="experience">
   <div class="section-inner">
     <div class="section-header reveal">
@@ -1098,7 +1415,6 @@
   </div>
 </section>
  
-<!-- ── PROJECTS ── -->
 <section id="projects">
   <div class="section-inner">
     <div class="section-header reveal">
@@ -1107,213 +1423,52 @@
       <div class="section-line"></div>
     </div>
  
-    <!-- Academic Research -->
-    <div class="proj-category">
-      <div class="proj-category-label reveal">
-        <span>🎓 Academic Research — Kent State University</span>
-      </div>
-      <div class="projects-grid">
+    <p class="projects-intro reveal">
+      Explore my work across three domains — each built at the intersection of mathematics, data science, and software. Click any category to dive into the full collection.
+    </p>
  
-        <div class="project-card reveal">
-          <div class="proj-icon">🌾</div>
-          <div class="proj-meta">
-            <span class="proj-year">Mar–May 2026</span>
-            <span class="proj-affil">· Kent State University</span>
-          </div>
-          <div class="proj-title">Re-Optimizing Food Systems</div>
-          <div class="proj-desc">Co-authored a dynamic framework using ODEs and SPDEs to simulate state-level food systems under government policy and political delays. Deployed an interactive "Model Playground" web platform and co-developed "ODE 3D" — one of the first-ever Differential Equations FPS educational video games. Presented live in a 50-minute academic seminar.</div>
-          <div class="proj-stack">
-            <span class="proj-tag">Python</span>
-            <span class="proj-tag">ODEs / SPDEs</span>
-            <span class="proj-tag">JavaScript</span>
-            <span class="proj-tag">HTML/CSS</span>
-          </div>
-          <div class="proj-links">
-            <a href="#" class="proj-link">↗ Website</a>
-            <a href="#" class="proj-link">⌥ GitHub</a>
-            <a href="#" class="proj-link">📄 Report</a>
-          </div>
+    <div class="proj-portals">
+ 
+      <a href="academic-projects.html" class="proj-portal reveal-s" style="--pc: var(--accent);">
+        <div class="portal-glow"></div>
+        <div class="portal-icon">
+          <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
         </div>
+        <div class="portal-category">Kent State University</div>
+        <div class="portal-title">Academic Research</div>
+        <div class="portal-desc">Differential equations, stochastic modeling, bioeconomic simulations, GIS analysis, and mathematical research papers co-authored and presented in live seminars.</div>
+        <div class="portal-count">6 Projects</div>
+        <div class="portal-arrow">Explore Research →</div>
+      </a>
  
-        <div class="project-card alt reveal">
-          <div class="proj-icon">🐟</div>
-          <div class="proj-meta">
-            <span class="proj-year">Jan–Mar 2026</span>
-            <span class="proj-affil">· Kent State University</span>
-          </div>
-          <div class="proj-title">Profit &amp; Population Dynamics: Bioeconomic Fishery Model</div>
-          <div class="proj-desc">Co-authored a bioeconomic model simulating a single-species fishery under seasonal costs, economic shocks, and market volatility via Geometric Brownian Motion. Concluded by adapting the Black-Scholes PDE to perform Real Options Analysis — valuing the unharvested fishery as a financial derivative to optimize harvesting strategies.</div>
-          <div class="proj-stack">
-            <span class="proj-tag g">Python</span>
-            <span class="proj-tag g">SciPy ODEs</span>
-            <span class="proj-tag g">GBM</span>
-            <span class="proj-tag g">Black-Scholes</span>
-          </div>
-          <div class="proj-links">
-            <a href="#" class="proj-link">⌥ GitHub</a>
-            <a href="#" class="proj-link">📄 Report</a>
-          </div>
+      <a href="work-projects.html" class="proj-portal reveal-s" style="--pc: var(--accent2);">
+        <div class="portal-glow"></div>
+        <div class="portal-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
         </div>
+        <div class="portal-category">Professional Work</div>
+        <div class="portal-title">Work Projects</div>
+        <div class="portal-desc">Data pipelines, industry dashboards, A/B testing analysis, and analytics solutions built in real professional environments for companies like Intel and the Recording Academy.</div>
+        <div class="portal-count">2 Industry Projects</div>
+        <div class="portal-arrow">View Work →</div>
+      </a>
  
-        <div class="project-card alt3 reveal">
-          <div class="proj-icon">🐜</div>
-          <div class="proj-meta">
-            <span class="proj-year">Mar–Apr 2025</span>
-            <span class="proj-affil">· Kent State University</span>
-          </div>
-          <div class="proj-title">Analyzing Ant Behavior: Chemical Signals &amp; Cellular Automata</div>
-          <div class="proj-desc">Simulated ant foraging behavior using a Python-based cellular automaton model incorporating dynamic pheromone diffusion and evaporation. Conducted systematic trials varying chemical source quantities, ant sensitivity, population density, and pheromone parameters to analyze emergent trail formation. Presented findings in a 50-minute seminar.</div>
-          <div class="proj-stack">
-            <span class="proj-tag o">Python</span>
-            <span class="proj-tag o">Cellular Automata</span>
-            <span class="proj-tag o">Mathematical Modeling</span>
-          </div>
-          <div class="proj-links">
-            <a href="#" class="proj-link">📄 Report</a>
-          </div>
+      <a href="personal-projects.html" class="proj-portal reveal-s" style="--pc: var(--accent3);">
+        <div class="portal-glow"></div>
+        <div class="portal-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="6"/><path d="M6 12h4M8 10v4"/><circle cx="15" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="17.5" cy="13" r="1" fill="currentColor" stroke="none"/></svg>
         </div>
+        <div class="portal-category">Personal Projects</div>
+        <div class="portal-title">Video Games</div>
+        <div class="portal-desc">Educational games and interactive simulations that bridge mathematics with immersive gameplay — a growing game library built from the ground up using Python, JS, and 3D modeling.</div>
+        <div class="portal-count">7 Games in Library</div>
+        <div class="portal-arrow">Play Now →</div>
+      </a>
  
-        <div class="project-card reveal">
-          <div class="proj-icon">🦊</div>
-          <div class="proj-meta">
-            <span class="proj-year">2025</span>
-            <span class="proj-affil">· Kent State University</span>
-          </div>
-          <div class="proj-title">Open-Field Foraging: Area-Restricted Search Simulation</div>
-          <div class="proj-desc">Modeled animal foraging on a 20×20 grid through three phases — random walk, memory diffusion, and area-restricted search — demonstrating how spatial memory and diffusion rate influence search efficiency. Results closely reflected real animal behavioral patterns.</div>
-          <div class="proj-stack">
-            <span class="proj-tag">Python</span>
-            <span class="proj-tag">Cellular Automata</span>
-            <span class="proj-tag">Diffusion Modeling</span>
-          </div>
-          <div class="proj-links">
-            <a href="#" class="proj-link">📄 Report</a>
-          </div>
-        </div>
- 
-        <div class="project-card alt reveal">
-          <div class="proj-icon">🤿</div>
-          <div class="proj-meta">
-            <span class="proj-year">Jan–Mar 2025</span>
-            <span class="proj-affil">· Kent State University</span>
-          </div>
-          <div class="proj-title">Pressure &amp; Volume in Scuba Diving</div>
-          <div class="proj-desc">Developed mathematical models using Boyle's Law and hydrostatic pressure to analyze air compression and pressure-volume changes at varying depths. Incorporated real seawater temperature data and used MATLAB to simulate and graph behavior during ascent and descent. Presented in two 50-minute seminars.</div>
-          <div class="proj-stack">
-            <span class="proj-tag g">MATLAB</span>
-            <span class="proj-tag g">Boyle's Law</span>
-            <span class="proj-tag g">Physics Modeling</span>
-          </div>
-          <div class="proj-links">
-            <a href="#" class="proj-link">📄 Report</a>
-          </div>
-        </div>
- 
-        <div class="project-card alt3 reveal">
-          <div class="proj-icon">🗺️</div>
-          <div class="proj-meta">
-            <span class="proj-year">Mar–May 2025</span>
-            <span class="proj-affil">· Kent State University</span>
-          </div>
-          <div class="proj-title">The Secret Treasure Hunt Experience</div>
-          <div class="proj-desc">An ArcGIS Web Experience exploring Byron Preiss's real-life treasure hunt (1982) involving 12 buried casques across North America. Features interactive maps, historical context, clue interpretations — especially on the solved 1983 Chicago puzzle — and community theories for unsolved mysteries.</div>
-          <div class="proj-stack">
-            <span class="proj-tag o">ArcGIS Pro</span>
-            <span class="proj-tag o">GIS Research</span>
-            <span class="proj-tag o">Data Visualization</span>
-          </div>
-          <div class="proj-links">
-            <a href="#" class="proj-link">↗ Experience</a>
-          </div>
-        </div>
- 
-      </div>
     </div>
- 
-    <!-- Career / Industry Projects -->
-    <div class="proj-category">
-      <div class="proj-category-label reveal">
-        <span>💼 Career / Industry Projects</span>
-      </div>
-      <div class="projects-grid two-col">
- 
-        <div class="project-card alt reveal">
-          <div class="proj-icon">⚡</div>
-          <div class="proj-meta">
-            <span class="proj-year">2025</span>
-            <span class="proj-affil">· The Global Career Accelerator × Intel</span>
-          </div>
-          <div class="proj-title">Intel Data Center Site Selection</div>
-          <div class="proj-desc">Co-designed with Intel's Sustainability Team to analyze U.S. regional energy data supporting site selection for a new Intel data center. Tasks included calculating net energy production, visualizing supply/demand fluctuations, analyzing renewable energy percentages, building treemaps of energy source breakdowns, and creating interactive Tableau dashboards. Delivered data-driven regional recommendations based on energy surplus, renewable adoption, and generation stability.</div>
-          <div class="proj-stack">
-            <span class="proj-tag g">Tableau</span>
-            <span class="proj-tag g">Data Analysis</span>
-            <span class="proj-tag g">Business Strategy</span>
-            <span class="proj-tag g">Data Visualization</span>
-          </div>
-          <div class="proj-links">
-            <a href="#" class="proj-link">📊 Dashboard</a>
-          </div>
-        </div>
- 
-        <div class="project-card alt3 reveal">
-          <div class="proj-icon">🎵</div>
-          <div class="proj-meta">
-            <span class="proj-year">2025</span>
-            <span class="proj-affil">· The Global Career Accelerator × Recording Academy</span>
-          </div>
-          <div class="proj-title">Grammys.com Web Analytics Analysis</div>
-          <div class="proj-desc">Analyzed the impact of splitting Grammys.com and RecordingAcademy.com to assess changes in user engagement. Evaluated KPIs including pages per session, bounce rate, and average time on site. Used pivot tables to uncover traffic spikes around show nights. Device usage analysis revealed 73.7% mobile access — driving a recommendation to maintain the site split while prioritizing mobile optimization.</div>
-          <div class="proj-stack">
-            <span class="proj-tag o">Microsoft Excel</span>
-            <span class="proj-tag o">Data Analysis</span>
-            <span class="proj-tag o">A/B Testing</span>
-            <span class="proj-tag o">Pivot Tables</span>
-          </div>
-          <div class="proj-links">
-            <a href="#" class="proj-link">📄 Analysis</a>
-          </div>
-        </div>
- 
-      </div>
-    </div>
- 
-    <!-- Personal / Game -->
-    <div class="proj-category">
-      <div class="proj-category-label reveal">
-        <span>🎮 Personal Projects &amp; Games</span>
-      </div>
-      <div class="projects-grid two-col">
- 
-        <div class="project-card reveal" style="grid-column: 1 / -1;">
-          <div class="proj-icon">🎮</div>
-          <div class="proj-meta">
-            <span class="proj-year">Mar–May 2026</span>
-            <span class="proj-affil">· Kent State University × Personal</span>
-          </div>
-          <div class="proj-title">ODE 3D — Interactive Differential Equations FPS Educational Game</div>
-          <div class="proj-desc">One of the first-ever interactive Differential Equations FPS (first-person shooter) educational video games ever created. Built as part of the Food Systems research project, ODE 3D makes the complex mathematics of Ordinary Differential Equations accessible and engaging through immersive 3D gameplay. Players explore mathematical concepts in a fully interactive 3D environment, navigating through ODE-driven simulations, parameter-based challenges, and real-time mathematical feedback — bridging the gap between academic rigor and hands-on learning. All 3D models coded in Python; HTML/CSS/JavaScript used for the game interface.</div>
-          <div class="proj-stack">
-            <span class="proj-tag">Python</span>
-            <span class="proj-tag">JavaScript</span>
-            <span class="proj-tag">HTML / CSS</span>
-            <span class="proj-tag">3D Modeling</span>
-            <span class="proj-tag">Game Design</span>
-            <span class="proj-tag">ODEs</span>
-          </div>
-          <div class="proj-links">
-            <a href="#" class="proj-link">↗ Play Game</a>
-            <a href="#" class="proj-link">⌥ GitHub</a>
-          </div>
-        </div>
- 
-      </div>
-    </div>
- 
   </div>
 </section>
  
-<!-- ── CONTACT ── -->
 <section id="contact">
   <div class="section-inner">
     <div class="section-header reveal">
@@ -1322,31 +1477,39 @@
       <div class="section-line"></div>
     </div>
     <div class="contact-grid">
-      <div class="reveal">
+      <div class="reveal-l">
         <h3 class="contact-intro">Let's build something <span>meaningful</span> together.</h3>
         <p class="contact-text">
           Whether you're looking for a data scientist, a quantitative analyst, want to collaborate on research, or just want to talk about an interesting math problem: I'm always open to a conversation.
         </p>
         <div class="contact-links">
           <a href="mailto:anthpaula3@gmail.com" class="contact-link">
-            <span class="contact-link-icon">✉</span>
-            your.email@example.com
+            <span class="contact-link-icon">
+              <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="stroke:currentColor;fill:none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </span>
+            anthpaula3@gmail.com
           </a>
           <a href="https://linkedin.com/in/anthony-artino-02584a321" target="_blank" class="contact-link">
-            <span class="contact-link-icon">in</span>
+            <span class="contact-link-icon">
+              <svg viewBox="0 0 24 24" style="fill:currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+            </span>
             linkedin.com/in/anthony-artino-02584a321
           </a>
           <a href="https://github.com/antha21" target="_blank" class="contact-link">
-            <span class="contact-link-icon">⌥</span>
+            <span class="contact-link-icon">
+              <svg viewBox="0 0 24 24" style="fill:currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.63-5.373-12-12-12z"/></svg>
+            </span>
             github.com/antha21
           </a>
           <a href="#" class="contact-link">
-            <span class="contact-link-icon">📄</span>
+            <span class="contact-link-icon">
+              <svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </span>
             Download Resume (PDF)
           </a>
         </div>
       </div>
-      <div class="reveal">
+      <div class="reveal-r">
         <div class="contact-form">
           <div class="form-group">
             <label class="form-label">Name</label>
@@ -1369,7 +1532,6 @@
   </div>
 </section>
  
-<!-- ── FOOTER ── -->
 <footer>
   <div class="footer-inner">
     <div class="footer-grid">
@@ -1387,7 +1549,14 @@
           <li><a href="#contact">Contact</a></li>
         </ul>
       </div>
-        
+      <div class="footer-col">
+        <div class="footer-col-title">Projects</div>
+        <ul>
+          <li><a href="academic-projects.html">Academic Research</a></li>
+          <li><a href="work-projects.html">Work Projects</a></li>
+          <li><a href="personal-projects.html">Video Games</a></li>
+        </ul>
+      </div>
       <div class="footer-col">
         <div class="footer-col-title">Contact Info</div>
         <ul>
@@ -1400,29 +1569,63 @@
         © <span id="year"></span> <span>Anthony Artino</span>. Built with math, code, and caffeine.
       </div>
       <div class="footer-socials">
-        <a href="https://github.com/antha21" class="social-btn" title="GitHub">⌥</a>
-        <a href="https://linkedin.com/in/anthony-artino-02584a321" class="social-btn" title="LinkedIn">in</a>
-        <a href="mailto:anthpaula3@gmail.com" class="social-btn" title="Email">✉</a>
+        <a href="https://github.com/antha21" class="social-btn" title="GitHub">
+          <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.63-5.373-12-12-12z"/></svg>
+        </a>
+        <a href="https://linkedin.com/in/anthony-artino-02584a321" class="social-btn" title="LinkedIn">
+          <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+        </a>
+        <a href="mailto:anthpaula3@gmail.com" class="social-btn" title="Email">
+          <svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </a>
+        <button class="social-btn pen-btn" id="pen-btn" onclick="openBSP()" title="Unlock Canvas">
+          <svg viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4z"/></svg>
+        </button>
       </div>
     </div>
   </div>
 </footer>
  
 <script>
+/* ── LOADER ── */
+(function(){
+  const lc=document.getElementById('ldr-canvas');
+  if(lc){
+    const lctx=lc.getContext('2d');
+    lc.width=window.innerWidth;lc.height=window.innerHeight;
+    const syms=['∫','∑','π','∂','Δ','∇','∞','√','λ','σ','μ','α','β','θ','φ','ℝ'];
+    const pts=Array.from({length:30},()=>({x:Math.random()*lc.width,y:Math.random()*lc.height,s:syms[Math.floor(Math.random()*syms.length)],sz:9+Math.random()*10,sp:.1+Math.random()*.2,op:.08+Math.random()*.18}));
+    let af;
+    function drawLdr(){af=requestAnimationFrame(drawLdr);lctx.clearRect(0,0,lc.width,lc.height);pts.forEach(p=>{lctx.font=`${p.sz}px 'JetBrains Mono',monospace`;lctx.fillStyle=`rgba(0,229,255,${p.opacity})`;lctx.fillText(p.s,p.x,p.y);p.y-=p.sp;if(p.y<-20)p.y=lc.height+10;});}
+    drawLdr();
+    setTimeout(()=>{
+      const l=document.getElementById('loader');
+      l.classList.add('out');
+      setTimeout(()=>{cancelAnimationFrame(af);if(l.parentNode)l.parentNode.removeChild(l);},950);
+    },2800);
+  }
+})();
+
 document.getElementById('year').textContent = new Date().getFullYear();
  
+// ── CUSTOM CURSOR ──
 const cursor = document.getElementById('cursor');
 const cursorRing = document.getElementById('cursor-ring');
-document.addEventListener('mousemove', e => {
-  cursor.style.left = e.clientX + 'px';
-  cursor.style.top = e.clientY + 'px';
-  setTimeout(() => {
-    cursorRing.style.left = e.clientX + 'px';
-    cursorRing.style.top = e.clientY + 'px';
-  }, 60);
-});
+if (cursor && cursorRing) {
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    setTimeout(() => {
+      cursorRing.style.left = e.clientX + 'px';
+      cursorRing.style.top = e.clientY + 'px';
+    }, 60);
+  });
+}
  
+// ── SCROLL PROGRESS + NAV ──
 window.addEventListener('scroll', () => {
+  const pct=window.scrollY/(document.body.scrollHeight-window.innerHeight);
+  document.getElementById('spbar').style.width=(pct*100)+'%';
   document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
 });
  
@@ -1433,16 +1636,23 @@ function toggleExp(header) {
   if (!isOpen) item.classList.add('open');
 }
  
-const revealObserver = new IntersectionObserver(entries => {
-  entries.forEach((e, i) => {
+/* ── SCROLL REVEAL (Fast Batching) ── */
+const revealObs = new IntersectionObserver(entries => {
+  let batchDelay = 0;
+  entries.forEach(e => {
     if (e.isIntersecting) {
-      e.target.style.transitionDelay = (i * 0.07) + 's';
+      e.target.style.transitionDelay = (batchDelay * 0.07) + 's';
       e.target.classList.add('visible');
-      revealObserver.unobserve(e.target);
+      revealObs.unobserve(e.target);
+      batchDelay++;
     }
   });
 }, { threshold: 0.1 });
-document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+document.querySelectorAll('.reveal, .reveal-l, .reveal-r, .reveal-s').forEach(el => revealObs.observe(el));
+
+/* Section header line trigger */
+const hdrObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');hdrObs.unobserve(e.target);}});},{threshold:0.3});
+document.querySelectorAll('.section-header').forEach(el=>hdrObs.observe(el));
  
 const barObserver = new IntersectionObserver(entries => {
   entries.forEach(e => {
@@ -1463,6 +1673,7 @@ function handleFormSubmit(btn) {
   setTimeout(() => { btn.textContent = 'Send Message →'; btn.style.background = ''; btn.style.color = ''; }, 3000);
 }
  
+// ── BACKGROUND CANVAS ──
 const canvas = document.getElementById('bg-canvas');
 const ctx = canvas.getContext('2d');
 const symbols = ['∫','∑','π','∂','Δ','∇','∞','√','λ','σ','μ','α','β','γ','θ','φ','0','1','∈','⊂','∀','∃','≡','≈','ℝ','ℕ','∏','lim','dx','dy','f(x)'];
@@ -1497,6 +1708,103 @@ function drawParticles() {
   requestAnimationFrame(drawParticles);
 }
 drawParticles();
+
+/* ── SECRET PEN + BLACK-SCHOLES MODAL ── */
+let drawUnlocked=false;
+function openBSP(){if(drawUnlocked)return;document.getElementById('bsp-modal').classList.add('open');setTimeout(()=>document.getElementById('bsp-answer').focus(),100);}
+function closeBSP(){document.getElementById('bsp-modal').classList.remove('open');document.getElementById('bsp-answer').value='';}
+document.getElementById('bsp-answer').addEventListener('keydown',function(e){
+  if(e.key==='Enter'){
+    const v=this.value.trim().toLowerCase();
+    if(v==='0'||v==='zero'){
+      closeBSP();drawUnlocked=true;
+      document.getElementById('pen-btn').classList.add('unlocked');
+      activateDrawMode();
+    } else {
+      this.classList.add('shake');
+      this.value='';
+      setTimeout(()=>this.classList.remove('shake'),350);
+    }
+  }
+  if(e.key==='Escape')closeBSP();
+});
+
+/* ── DRAWING SYSTEM ── */
+let drawColor='#00e5ff',drawSize=2,drawEraser=false;
+const drawCanvases=[];
+
+function activateDrawMode(){
+  const containers=[document.getElementById('hero-photo-container'),document.getElementById('about-photo-container')];
+  containers.forEach(cont=>{
+    if(!cont)return;
+    cont.style.position='relative';
+    const dc=document.createElement('canvas');
+    dc.classList.add('draw-canvas-overlay');
+    const w=cont.offsetWidth,h=cont.offsetHeight;
+    dc.width=w;dc.height=h;
+    cont.appendChild(dc);
+    drawCanvases.push(dc);
+    setupCanvas(dc);
+  });
+  document.getElementById('draw-toolbar').classList.add('show');
+}
+
+function setupCanvas(dc){
+  const dctx=dc.getContext('2d');
+  let drawing=false,lx=0,ly=0;
+  function getPos(e){
+    const r=dc.getBoundingClientRect();
+    if(e.touches)return{x:e.touches[0].clientX-r.left,y:e.touches[0].clientY-r.top};
+    return{x:e.clientX-r.left,y:e.clientY-r.top};
+  }
+  function start(e){drawing=true;const p=getPos(e);lx=p.x;ly=p.y;e.preventDefault();}
+  function move(e){
+    if(!drawing)return;e.preventDefault();
+    const p=getPos(e);
+    dctx.beginPath();
+    dctx.moveTo(lx,ly);dctx.lineTo(p.x,p.y);
+    
+    // ERASER FIX
+    dctx.strokeStyle = drawEraser ? 'rgba(0,0,0,1)' : drawColor;
+    dctx.globalCompositeOperation = drawEraser ? 'destination-out' : 'source-over';
+    
+    dctx.lineWidth=drawEraser?drawSize*3:drawSize;
+    dctx.lineCap='round';dctx.lineJoin='round';
+    dctx.stroke();
+    lx=p.x;ly=p.y;
+  }
+  function stop(){drawing=false;}
+  dc.addEventListener('mousedown',start);dc.addEventListener('mousemove',move);
+  dc.addEventListener('mouseup',stop);dc.addEventListener('mouseleave',stop);
+  dc.addEventListener('touchstart',start,{passive:false});dc.addEventListener('touchmove',move,{passive:false});
+  dc.addEventListener('touchend',stop);
+}
+
+/* Toolbar controls */
+document.getElementById('draw-sizes').addEventListener('click',function(e){
+  const btn=e.target.closest('.draw-sz');if(!btn)return;
+  document.querySelectorAll('.draw-sz').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');drawSize=parseInt(btn.dataset.sz);drawEraser=false;
+  document.getElementById('draw-eraser').classList.remove('active');
+});
+document.getElementById('draw-colors').addEventListener('click',function(e){
+  const btn=e.target.closest('.draw-col');if(!btn)return;
+  document.querySelectorAll('.draw-col').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');drawColor=btn.dataset.color;drawEraser=false;
+  document.getElementById('draw-eraser').classList.remove('active');
+});
+document.getElementById('draw-eraser').addEventListener('click',function(){
+  drawEraser=!drawEraser;this.classList.toggle('active',drawEraser);
+});
+function clearAllCanvases(){drawCanvases.forEach(dc=>{const c=dc.getContext('2d');c.clearRect(0,0,dc.width,dc.height);});}
+function exitDrawMode(){
+  drawCanvases.forEach(dc=>{if(dc.parentNode)dc.parentNode.removeChild(dc);});
+  drawCanvases.length=0;drawUnlocked=false;
+  document.getElementById('draw-toolbar').classList.remove('show');
+  document.getElementById('pen-btn').classList.remove('unlocked');
+}
+
 </script>
+
 </body>
 </html>
