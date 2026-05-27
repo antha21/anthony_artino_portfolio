@@ -176,7 +176,7 @@
 <header class="page-hero">
   <div class="page-tag">Kent State University · Research</div>
   <h1 class="page-title">Academic<br /><span>Research</span></h1>
-  <p class="page-sub">Mathematical research projects spanning differential equations, bioeconomic modeling, animal behavior simulation, physics modeling, and geospatial analysis — all presented in live academic seminars.</p>
+  <p class="page-sub">Mathematical research projects spanning differential equations, bioeconomic modeling, animal behavior simulation, physics modeling, and geospatial analysis with most of them presented in live academic seminars.</p>
 </header>
  
 <main class="projects-grid">
@@ -192,8 +192,9 @@
         </span>
         <span class="proj-year">Mar–May 2026</span>
       </div>
-      <div class="proj-title">Re-Optimizing Food Systems</div>
+      <div class="proj-title">Re-Optimizing Food Systems: A Dynamic Analysis of Production, Sustainability, and Equity</div>
       <div class="proj-desc">Co-authored a dynamic framework using ODEs and SPDEs to simulate state-level food systems under government policy and political delays. Deployed an interactive "Model Playground" web platform and co-developed "ODE 3D".</div>
+      <div class="proj-collab"> In collaboration with Sarah Decipeda</div>
       <div class="proj-stack">
         <span class="proj-tag">Python</span>
         <span class="proj-tag">ODEs / SPDEs</span>
@@ -219,8 +220,9 @@
         </span>
         <span class="proj-year">Jan–Mar 2026</span>
       </div>
-      <div class="proj-title">Profit &amp; Population Dynamics</div>
+      <div class="proj-title">Profit and Population Dynamics: Bioeconomic Modeling and Real Options Analysis of a Fishery</div>
       <div class="proj-desc">Co-authored a bioeconomic model simulating a single-species fishery under seasonal costs, economic shocks, and market volatility via Geometric Brownian Motion. Adapted the Black-Scholes PDE to perform Real Options Analysis.</div>
+      <div class="proj-collab"> In collaboration with Sarah Decipeda</div>
       <div class="proj-stack">
         <span class="proj-tag g">Python</span>
         <span class="proj-tag g">SciPy ODEs</span>
@@ -233,8 +235,32 @@
       </div>
     </div>
   </div>
- 
-  <div class="project-card o" style="animation-delay: 0.6s;">
+
+  <div class="project-card" style="animation-delay: 0.6s;">
+    <div class="proj-img-wrap">
+      <svg class="proj-placeholder-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      </div>
+    <div class="proj-content">
+      <div class="proj-meta">
+        <span class="proj-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        </span>
+        <span class="proj-year">Apr 2025</span>
+      </div>
+      <div class="proj-title">Cellular Automaton Simulation of Open-Field Foraging with Area-Restricted Search</div>
+      <div class="proj-desc">Modeled animal foraging on a 20×20 grid through three phases consisting of random walk, memory diffusion, and area-restricted search as these demonstrated how spatial memory influences search efficiency.</div>
+      <div class="proj-stack">
+        <span class="proj-tag">Python</span>
+        <span class="proj-tag">Cellular Automata</span>
+        <span class="proj-tag">Diffusion Models</span>
+      </div>
+      <div class="proj-links">
+        <a href="#" class="proj-link"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Report</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="project-card o" style="animation-delay: 0.7s;">
     <div class="proj-img-wrap">
       <svg class="proj-placeholder-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
       </div>
@@ -245,36 +271,12 @@
         </span>
         <span class="proj-year">Mar–Apr 2025</span>
       </div>
-      <div class="proj-title">Analyzing Ant Behavior</div>
+      <div class="proj-title">Analyzing Ant Behavior: The Impact of Chemical Signals and Environmental Factors in a Simulation</div>
       <div class="proj-desc">Simulated ant foraging behavior using a Python-based cellular automaton model incorporating dynamic pheromone diffusion and evaporation. Analyzed emergent trail formation across varying population densities.</div>
       <div class="proj-stack">
         <span class="proj-tag o">Python</span>
         <span class="proj-tag o">Cellular Automata</span>
         <span class="proj-tag o">Math Modeling</span>
-      </div>
-      <div class="proj-links">
-        <a href="#" class="proj-link"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Report</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="project-card" style="animation-delay: 0.7s;">
-    <div class="proj-img-wrap">
-      <svg class="proj-placeholder-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-      </div>
-    <div class="proj-content">
-      <div class="proj-meta">
-        <span class="proj-icon">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-        </span>
-        <span class="proj-year">2025</span>
-      </div>
-      <div class="proj-title">Open-Field Foraging</div>
-      <div class="proj-desc">Modeled animal foraging on a 20×20 grid through three phases — random walk, memory diffusion, and area-restricted search — demonstrating how spatial memory influences search efficiency.</div>
-      <div class="proj-stack">
-        <span class="proj-tag">Python</span>
-        <span class="proj-tag">Cellular Automata</span>
-        <span class="proj-tag">Diffusion Models</span>
       </div>
       <div class="proj-links">
         <a href="#" class="proj-link"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Report</a>
@@ -293,7 +295,7 @@
         </span>
         <span class="proj-year">Jan–Mar 2025</span>
       </div>
-      <div class="proj-title">Pressure &amp; Volume in Scuba</div>
+      <div class="proj-title">Diving into the Depths: Unraveling the Hidden Dynamics of Pressure and Volume in Scuba Diving</div>
       <div class="proj-desc">Developed mathematical models using Boyle's Law and hydrostatic pressure to analyze air compression and pressure-volume changes at varying depths using real seawater temperature data.</div>
       <div class="proj-stack">
         <span class="proj-tag g">MATLAB</span>
@@ -317,7 +319,7 @@
         </span>
         <span class="proj-year">Mar–May 2025</span>
       </div>
-      <div class="proj-title">The Secret Treasure Hunt</div>
+      <div class="proj-title">The Secret Treasure Hunt Experience</div>
       <div class="proj-desc">An ArcGIS Web Experience exploring Byron Preiss's real-life treasure hunt involving 12 buried casques across North America. Features interactive maps, historical context, and clue interpretations.</div>
       <div class="proj-stack">
         <span class="proj-tag o">ArcGIS Pro</span>
@@ -340,36 +342,86 @@
   
   <div class="seminar-grid reveal">
     <div class="seminar-item">
-      <div class="sem-date">May 6, 2026</div>
-      <div class="sem-title">Re-Optimizing Food Systems: A Dynamic Analysis</div>
+      <div class="sem-date">May 1, 2026</div>
+      <div class="sem-title">Re-Optimizing Food Systems: A Dynamic Analysis of Production, Sustainability, and Equity</div>
       <div class="sem-loc">KSU Mathematical Sciences Seminar Room</div>
     </div>
-    
-    <div class="seminar-item">
-      <div class="sem-date">Spring 2025</div>
-      <div class="sem-title">Pressure &amp; Volume in Scuba Diving (Session I)</div>
-      <div class="sem-loc">Kent State University</div>
-    </div>
 
-    <div class="seminar-item">
-      <div class="sem-date">Spring 2025</div>
-      <div class="sem-title">Pressure &amp; Volume in Scuba Diving (Session II)</div>
-      <div class="sem-loc">Kent State University</div>
+  <div class="seminar-grid reveal">
+  <div class="seminar-item">
+    <div class="sem-date">May 1, 2026</div>
+    <div class="sem-title">
+      Re-Optimizing Food Systems: A Dynamic Analysis of Production, Sustainability, and Equity
     </div>
-
-    <div class="seminar-item">
-      <div class="sem-date">Spring 2025</div>
-      <div class="sem-title">Analyzing Ant Behavior: Cellular Automata</div>
-      <div class="sem-loc">Kent State University</div>
+    <div class="sem-event">
+      Modeling Projects
+    </div>
+    <div class="sem-loc">
+      Kent State University - Mathematical Sciences Sciences MSB 158
+    </div>
+    <div class="sem-collab">
+      Presented in collaboration with Sarah Decipeda
     </div>
   </div>
+</div>
+    
+    <div class="seminar-item">
+      <div class="sem-date">March 23, 2026</div>
+      <div class="sem-title">LaTeX Workshop Demo Session</div>
+      <div class="sem-loc">Kent State University - Mathematical Sciences Sciences MSB 158</div>
+    </div>
+
+  <div class="seminar-grid reveal">
+  <div class="seminar-item">
+    <div class="sem-date">March 4, 2026</div>
+    <div class="sem-title">
+      Profit and Population Dynamics: Bioeconomic Modeling and Real Options Analysis of a Fishery
+    </div>
+    <div class="sem-event">
+      Modeling Projects
+    </div>
+    <div class="sem-loc">
+      Kent State University - Mathematical Sciences Sciences MSB 158
+    </div>
+    <div class="sem-collab">
+      Presented in collaboration with Sarah Decipeda
+    </div>
+  </div>
+</div>
+
+    <div class="seminar-item">
+      <div class="sem-date">Februrary 16, 2026</div>
+      <div class="sem-title">Diving into the Depths: Unraveling the Hidden Dynamics of Pressure and Volume in Scuba Diving</div>
+      <div class="sem-loc">Kent State University - Mathematical Sciences Sciences MSB 158</div>
+    </div>
+
+    <div class="seminar-item">
+      <div class="sem-date">April 21, 2025</div>
+      <div class="sem-title">Cellular Automaton Simulation of Open-Field Foraging with Area-Restricted Search</div>
+      <div class="sem-loc">Kent State University - Mathematical Sciences Sciences MSB 158</div>
+    </div>
+  </div>
+
+  <div class="seminar-item">
+      <div class="sem-date">March 26, 2025</div>
+      <div class="sem-title">Analyzing Ant Behavior: The Impact of Chemical Signals and Environmental Factors in a Simulation</div>
+      <div class="sem-loc">Kent State University - Mathematical Sciences Sciences MSB 158</div>
+    </div>
+  </div>
+
+  
+  <div class="seminar-item">
+      <div class="sem-date">Februrary 12, 2025</div>
+      <div class="sem-title">Diving into the Depths: Unraveling the Hidden Dynamics of Pressure and Volume in Scuba Diving</div>
+      <div class="sem-loc">Kent State University - Mathematical Sciences Sciences MSB 158</div>
+    </div>
 </section>
  
 <footer>
   <div class="footer-inner">
     <div class="footer-bottom">
       <div class="footer-copy">
-        © <span id="year"></span> <span>Anthony Artino</span>. Built with math, code, and caffeine.
+        © <span id="year"></span> <span>Anthony Artino. All Rights Reserved.</span>
       </div>
     </div>
   </div>
