@@ -488,6 +488,65 @@
     requestAnimationFrame(drawParticles);
   }
   drawParticles();
+
+  function initCanvas(id, drawFunc) {
+  const canvas = document.getElementById(id);
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  drawFunc(ctx, canvas);
+}
+
+// 1. Food Systems / Ant Automata (Particle Trail)
+initCanvas('food-canvas', (ctx, c) => {
+  let particles = Array.from({length: 40}, () => ({x: Math.random()*c.width, y: Math.random()*c.height, vx: Math.random()*2-1, vy: Math.random()*2-1}));
+  function draw() {
+    ctx.fillStyle = 'rgba(0,0,0,0.1)'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle = '#00e5ff';
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if(p.x<0||p.x>c.width) p.vx*=-1;
+      if(p.y<0||p.y>c.height) p.vy*=-1;
+      ctx.fillRect(p.x, p.y, 2, 2);
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+});
+
+// 2. Black-Scholes Surface (Wave)
+initCanvas('bs-canvas', (ctx, c) => {
+  let time = 0;
+  function draw() {
+    ctx.fillStyle = '#000'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.strokeStyle = '#7fff8c';
+    ctx.beginPath();
+    for(let x=0; x<c.width; x+=5) {
+      let y = c.height/2 + Math.sin(x*0.03 + time) * 30;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    time += 0.05;
+    requestAnimationFrame(draw);
+  }
+  draw();
+});
+
+// 3. Ant Animation
+initCanvas('ant-canvas', (ctx, c) => {
+  let ants = Array.from({length: 15}, () => ({x: c.width/2, y: c.height/2, a: Math.random()*Math.PI*2}));
+  function draw() {
+    ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle = '#ff6b35';
+    ants.forEach(a => {
+      a.x += Math.cos(a.a); a.y += Math.sin(a.a);
+      a.a += (Math.random()-0.5)*0.2;
+      ctx.fillRect(a.x, a.y, 3, 3);
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+});
 </script>
 </body>
 </html>
