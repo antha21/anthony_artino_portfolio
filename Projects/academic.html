@@ -61,7 +61,7 @@
     .page-sub { font-size: 14px; color: var(--text-dim); max-width: 680px; margin: 0 auto; line-height: 1.8; opacity: 0; animation: fadeUp 0.6s 0.3s forwards; }
 
     /* ─── PROJECT CARDS ─── */
-    .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 32px; padding: 0 48px 80px; max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+    .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 32px; padding: 0 48px 120px; max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
     
     .project-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s; position: relative; opacity: 0; animation: fadeUp 0.6s 0.4s forwards; }
     .project-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); transform: scaleX(0); transition: transform 0.4s cubic-bezier(0.4,0,0.2,1); transform-origin: left; z-index: 2;}
@@ -74,7 +74,7 @@
     .project-card.o:hover { border-color: var(--accent3); }
 
     .proj-img-wrap { height: 220px; background: var(--bg3); position: relative; overflow: hidden; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
-    .proj-placeholder-icon { position: absolute; width: 48px; height: 48px; stroke: var(--text-faint); stroke-width: 1; fill: none; transition: stroke 0.3s, transform 0.3s; }
+    .proj-placeholder-icon { position: absolute; width: 48px; height: 48px; stroke: var(--text-faint); stroke-width: 1; fill: none; transition: stroke 0.3s, transform 0.3s; z-index: 0; }
     .project-card:hover .proj-placeholder-icon { stroke: var(--accent); transform: scale(1.1); }
     .project-card.g:hover .proj-placeholder-icon { stroke: var(--accent2); }
     .project-card.o:hover .proj-placeholder-icon { stroke: var(--accent3); }
@@ -126,21 +126,20 @@
     }
     .seminar-item:hover { border-color: var(--accent); transform: translateX(8px); }
     .sem-date { color: var(--accent); font-family: var(--mono); letter-spacing: 0.05em; text-transform: uppercase; font-size: 11px; }
-    .sem-title { color: var(--white); font-weight: 700; font-family: var(--sans); font-size: 16px; line-height: 1.3; }
-    .sem-loc { color: var(--text-dim); font-size: 13px; text-align: right; }
-
+    
     .sem-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    line-height: 1.3;
+      font-size: 1.15rem;
+      font-weight: 600;
+      line-height: 1.3;
+      color: var(--white);
     }
-
     .sem-collab {
-    font-size: 0.85rem;
-    font-weight: 400;
-    opacity: 0.75;
-    margin-top: 4px;
+      font-size: 0.85rem;
+      font-weight: 400;
+      color: var(--text-dim);
+      margin-top: 4px;
     }
+    .sem-loc { color: var(--text-faint); font-size: 13px; text-align: right; }
 
     /* ─── FOOTER ─── */
     footer { background: var(--bg); border-top: 1px solid var(--border); padding: 48px 0; position: relative; z-index: 1; }
@@ -197,9 +196,8 @@
   <div class="project-card" style="animation-delay: 0.4s;">
     <div class="proj-img-wrap">
       <img src="img/Project1pic.jpg" alt="Re-Optimizing Food Systems Project Image" />
-    </div>
       <svg class="proj-placeholder-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-      </div>
+    </div>
     <div class="proj-content">
       <div class="proj-meta">
         <span class="proj-icon">
@@ -226,7 +224,7 @@
   <div class="project-card g" style="animation-delay: 0.5s;">
     <div class="proj-img-wrap">
       <svg class="proj-placeholder-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-      </div>
+    </div>
     <div class="proj-content">
       <div class="proj-meta">
         <span class="proj-icon">
@@ -252,7 +250,7 @@
   <div class="project-card" style="animation-delay: 0.6s;">
     <div class="proj-img-wrap">
       <svg class="proj-placeholder-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-      </div>
+    </div>
     <div class="proj-content">
       <div class="proj-meta">
         <span class="proj-icon">
@@ -276,7 +274,7 @@
   <div class="project-card o" style="animation-delay: 0.7s;">
     <div class="proj-img-wrap">
       <svg class="proj-placeholder-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-      </div>
+    </div>
     <div class="proj-content">
       <div class="proj-meta">
         <span class="proj-icon">
@@ -300,9 +298,8 @@
   <div class="project-card g" style="animation-delay: 0.8s;">
     <div class="proj-img-wrap">
       <img src="img/project5pic.png" alt="Scuba Diving Image" />
-    </div>
       <svg class="proj-placeholder-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-      </div>
+    </div>
     <div class="proj-content">
       <div class="proj-meta">
         <span class="proj-icon">
@@ -326,9 +323,8 @@
   <div class="project-card o" style="animation-delay: 0.9s;">
     <div class="proj-img-wrap">
       <img src="img/project6pic.jpg" alt="The Secret Treasue Hunt Image" />
-    </div>
       <svg class="proj-placeholder-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-      </div>
+    </div>
     <div class="proj-content">
       <div class="proj-meta">
         <span class="proj-icon">
@@ -358,72 +354,66 @@
   </div>
   
   <div class="seminar-grid reveal">
-  <div class="seminar-item">
     
-    <div class="sem-date">May 1, 2026</div>
-    <div>
-      <div class="sem-title">
-        Re-Optimizing Food Systems: A Dynamic Analysis of Production, Sustainability, and Equity
+    <div class="seminar-item">
+      <div class="sem-date">May 1, 2026</div>
+      <div>
+        <div class="sem-title">Re-Optimizing Food Systems: A Dynamic Analysis of Production, Sustainability, and Equity</div>
+        <div class="sem-collab">Presented in collaboration with Sarah Decipeda</div>
       </div>
-      <div class="sem-collab">
-        Presented in collaboration with Sarah Decipeda
-      </div>
+      <div class="sem-loc">KSU Mathematical Sciences MSB 158</div>
     </div>
-    <div class="sem-loc">
-      KSU Mathematical Sciences MSB 158
-    </div>
-  </div>
-</div>
     
     <div class="seminar-item">
       <div class="sem-date">March 23, 2026</div>
-      <div class="sem-title">LaTeX Workshop Demo Session</div>
+      <div>
+        <div class="sem-title">LaTeX Workshop Demo Session</div>
+      </div>
       <div class="sem-loc">KSU Mathematical Sciences MSB 158</div>
     </div>
 
-  <div class="seminar-grid reveal">
-  <div class="seminar-item">
-  <div class="sem-date">March 4, 2026</div>
-    <div>
-      <div class="sem-title">
-        Profit and Population Dynamics: Bioeconomic Modeling and Real Options Analysis of a Fishery
+    <div class="seminar-item">
+      <div class="sem-date">March 4, 2026</div>
+      <div>
+        <div class="sem-title">Profit and Population Dynamics: Bioeconomic Modeling and Real Options Analysis of a Fishery</div>
+        <div class="sem-collab">Presented in collaboration with Sarah Decipeda</div>
       </div>
-      <div class="sem-collab">
-        Presented in collaboration with Sarah Decipeda
-      </div>
+      <div class="sem-loc">KSU Mathematical Sciences MSB 158</div>
     </div>
-    <div class="sem-loc">
-      KSU Mathematical Sciences MSB 158
-    </div>
-  </div>
-</div>
 
     <div class="seminar-item">
       <div class="sem-date">Februrary 16, 2026</div>
-      <div class="sem-title">Diving into the Depths: Unraveling the Hidden Dynamics of Pressure and Volume in Scuba Diving</div>
+      <div>
+        <div class="sem-title">Diving into the Depths: Unraveling the Hidden Dynamics of Pressure and Volume in Scuba Diving</div>
+      </div>
       <div class="sem-loc">KSU Mathematical Sciences MSB 158</div>
     </div>
 
     <div class="seminar-item">
       <div class="sem-date">April 21, 2025</div>
-      <div class="sem-title">Cellular Automaton Simulation of Open-Field Foraging with Area-Restricted Search</div>
+      <div>
+        <div class="sem-title">Cellular Automaton Simulation of Open-Field Foraging with Area-Restricted Search</div>
+      </div>
       <div class="sem-loc">KSU Mathematical Sciences MSB 158</div>
     </div>
-  </div>
 
-  <div class="seminar-item">
+    <div class="seminar-item">
       <div class="sem-date">March 26, 2025</div>
-      <div class="sem-title">Analyzing Ant Behavior: The Impact of Chemical Signals and Environmental Factors in a Simulation</div>
+      <div>
+        <div class="sem-title">Analyzing Ant Behavior: The Impact of Chemical Signals and Environmental Factors in a Simulation</div>
+      </div>
       <div class="sem-loc">KSU Mathematical Sciences MSB 158</div>
     </div>
-  </div>
-
-  
-  <div class="seminar-item">
+    
+    <div class="seminar-item">
       <div class="sem-date">Februrary 12, 2025</div>
-      <div class="sem-title">Diving into the Depths: Unraveling the Hidden Dynamics of Pressure and Volume in Scuba Diving</div>
+      <div>
+        <div class="sem-title">Diving into the Depths: Unraveling the Hidden Dynamics of Pressure and Volume in Scuba Diving</div>
+      </div>
       <div class="sem-loc">KSU Mathematical Sciences MSB 158</div>
     </div>
+
+  </div>
 </section>
  
 <footer>
