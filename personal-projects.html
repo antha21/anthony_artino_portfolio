@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Game Library — DeShrimpo Game Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06080e;--bg2:#0a0d16;--bg3:#0e1220;--surface:#121826;--border:#1c2638;
+  --accent:#00e5ff;--accent2:#7fff8c;--accent3:#ff6b35;--ps:#003db5;--ps-l:#0069ff;
+  --text:#cdd9e5;--text-dim:#4a6a85;--text-faint:#253545;--white:#f0f6fc;
+  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;--cond:'Barlow Condensed',sans-serif;
+  --r:6px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.6;overflow-x:hidden;cursor:none}
+#cursor{width:10px;height:10px;background:var(--accent);border-radius:50%;position:fixed;pointer-events:none;transform:translate(-50%,-50%);z-index:9999;mix-blend-mode:screen;transition:width .15s,height .15s}
+#cursor-ring{width:32px;height:32px;border:1px solid rgba(0,229,255,.35);border-radius:50%;position:fixed;pointer-events:none;transform:translate(-50%,-50%);transition:all .2s ease;z-index:9998}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+ 
+/* ── PROMO TICKER ── */
+.promo-ticker{background:var(--ps);padding:7px 0;overflow:hidden;position:relative;z-index:50}
+.ticker-track{display:flex;gap:0;animation:tickerScroll 28s linear infinite;white-space:nowrap}
+.ticker-track span{font-family:var(--cond);font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.85);padding:0 40px}
+.ticker-track span::before{content:'//';margin-right:16px;opacity:.5}
+@keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+ 
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:200;background:rgba(6,8,14,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 40px;height:60px;display:flex;align-items:center;justify-content:space-between}
+.nav-back{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text-dim);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+.nav-back:hover{color:var(--accent)}
+.nav-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.nav-studio{font-family:var(--cond);font-size:22px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--white)}
+.nav-studio span{color:var(--accent)}
+.nav-count{font-size:11px;color:var(--text-dim);letter-spacing:.08em}
+ 
+/* ── HERO FEATURED ── */
+.store-hero{position:relative;min-height:520px;display:grid;grid-template-columns:1fr 1.1fr;overflow:hidden;cursor:pointer;border-bottom:1px solid var(--border)}
+.store-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,8,14,.98) 30%,rgba(6,8,14,.6) 60%,transparent 100%);pointer-events:none;z-index:2}
+.hero-art-wrap{position:absolute;inset:0;z-index:1}
+.hero-game-art{width:100%;height:100%;position:relative;overflow:hidden}
+ 
+/* ODE 3D Hero Art */
+.art-ode3d{background:radial-gradient(ellipse at 70% 40%,#003040 0%,#001520 35%,#000c14 70%,#000507 100%)}
+.art-ode3d .grid-floor{position:absolute;bottom:0;left:0;right:0;height:55%;transform-origin:bottom;transform:perspective(400px) rotateX(55deg);background-image:linear-gradient(rgba(0,229,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.12) 1px,transparent 1px);background-size:48px 48px}
+.art-ode3d .eq-float{position:absolute;font-family:var(--mono);color:rgba(0,229,255,.6);animation:eqFloat 8s ease-in-out infinite}
+.art-ode3d .crosshair{position:absolute;top:38%;right:30%;transform:translate(50%,-50%);width:80px;height:80px}
+.art-ode3d .crosshair circle{stroke:rgba(0,229,255,.9);fill:none;stroke-width:1.5}
+.art-ode3d .crosshair line{stroke:rgba(0,229,255,.6);stroke-width:1}
+.art-ode3d .glow-sphere{position:absolute;top:35%;right:32%;width:120px;height:120px;transform:translate(50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,.12) 0%,transparent 70%);animation:spherePulse 3s ease-in-out infinite}
+@keyframes eqFloat{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-12px) rotate(var(--r,0deg))}}
+@keyframes spherePulse{0%,100%{transform:translate(50%,-50%) scale(1);opacity:.6}50%{transform:translate(50%,-50%) scale(1.3);opacity:1}}
+.art-ode3d .scan-overlay{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 4px);pointer-events:none}
+ 
+.hero-content{position:relative;z-index:3;padding:60px 48px;display:flex;flex-direction:column;justify-content:center;gap:16px;max-width:580px}
+.hero-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hero-live-badge{background:var(--accent);color:var(--bg);font-family:var(--cond);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;padding:4px 12px;border-radius:3px;animation:badgePulse 2s ease-in-out infinite}
+@keyframes badgePulse{0%,100%{box-shadow:0 0 0 rgba(0,229,255,.4)}50%{box-shadow:0 0 16px rgba(0,229,255,.5)}}
+.hero-num{font-family:var(--cond);font-size:11px;font-weight:600;letter-spacing:.2em;color:var(--text-dim);text-transform:uppercase}
+.hero-esrb-mini{font-family:var(--cond);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--text-dim);border:1px solid var(--text-faint);padding:2px 6px;border-radius:2px}
+.hero-title{font-family:var(--cond);font-size:clamp(56px,8vw,96px);font-weight:900;line-height:.9;letter-spacing:.04em;color:var(--white);text-transform:uppercase}
+.hero-title span{display:block;font-size:.45em;font-weight:700;letter-spacing:.25em;color:var(--accent);margin-bottom:8px}
+.hero-sub{font-family:var(--sans);font-size:15px;font-weight:400;color:var(--text);line-height:1.6;max-width:480px}
+.hero-tags{display:flex;flex-wrap:wrap;gap:8px}
+.hero-tag{font-family:var(--cond);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:4px 12px;border:1px solid rgba(0,229,255,.3);color:var(--accent);border-radius:3px;background:rgba(0,229,255,.06)}
+.hero-btn{display:inline-flex;align-items:center;gap:10px;padding:14px 32px;background:var(--accent);color:var(--bg);font-family:var(--cond);font-size:16px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;border:none;border-radius:4px;cursor:pointer;transition:all .2s;align-self:flex-start;margin-top:8px}
+.hero-btn:hover{background:#33eeff;transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,229,255,.3)}
+.hero-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+ 
+/* ── STORE TABS ── */
+.store-tabs-wrap{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 40px;position:sticky;top:60px;z-index:100}
+.store-tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.store-tabs::-webkit-scrollbar{display:none}
+.stab{background:none;border:none;border-bottom:2px solid transparent;padding:16px 24px;font-family:var(--cond);font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);cursor:pointer;transition:color .2s,border-color .2s;white-space:nowrap}
+.stab:hover{color:var(--white)}
+.stab.active{color:var(--accent);border-bottom-color:var(--accent)}
+ 
+/* ── JAMPACK SECTION HEADER ── */
+.section-header-ps{padding:40px 40px 24px;display:flex;align-items:flex-end;justify-content:space-between}
+.section-header-ps .sh-left{display:flex;flex-direction:column;gap:4px}
+.section-header-ps .sh-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:12px}
+.section-header-ps .sh-eyebrow::before{content:'';width:24px;height:1px;background:var(--accent)}
+.section-header-ps .sh-title{font-family:var(--cond);font-size:clamp(28px,3vw,42px);font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--white);line-height:1}
+.section-header-ps .sh-right{font-family:var(--mono);font-size:11px;color:var(--text-faint);letter-spacing:.08em;text-align:right}
+ 
+/* ── GAME GRID ── */
+.game-grid-wrap{padding:0 40px 80px}
+.game-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+ 
+/* ── GAME CARD ── */
+.game-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;position:relative;transition:transform .3s cubic-bezier(.16,1,.3,1),border-color .3s,box-shadow .3s;display:flex;flex-direction:column}
+.game-card:hover{transform:translateY(-8px) scale(1.02);border-color:var(--card-accent,var(--accent));box-shadow:0 20px 50px rgba(0,0,0,.6),0 0 0 1px var(--card-accent,var(--accent))}
+.game-card:hover .card-scan{opacity:1}
+.card-cover{width:100%;aspect-ratio:3/4;position:relative;overflow:hidden;flex-shrink:0}
+.card-scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);pointer-events:none;opacity:0;transition:opacity .3s;z-index:5}
+.card-hover-reveal{position:absolute;bottom:0;left:0;right:0;padding:14px;background:linear-gradient(0deg,rgba(0,0,0,.9) 0%,transparent 100%);transform:translateY(100%);transition:transform .3s cubic-bezier(.16,1,.3,1);z-index:6;display:flex;align-items:center;justify-content:space-between}
+.game-card:hover .card-hover-reveal{transform:translateY(0)}
+.hover-reveal-text{font-family:var(--cond);font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--white)}
+.hover-reveal-arrow{font-family:var(--mono);font-size:14px;color:var(--card-accent,var(--accent))}
+/* Badges on card */
+.card-badges{position:absolute;top:10px;left:10px;z-index:7;display:flex;flex-direction:column;gap:6px}
+.cbadge{font-family:var(--cond);font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:3px 8px;border-radius:3px}
+.cbadge-free{background:var(--accent2);color:#000}
+.cbadge-soon{background:rgba(255,255,255,.12);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.15)}
+.cbadge-new{background:var(--accent);color:var(--bg)}
+/* Card info */
+.card-info{padding:14px 14px 16px;flex:1;display:flex;flex-direction:column;gap:6px}
+.card-num{font-family:var(--cond);font-size:10px;font-weight:600;letter-spacing:.2em;color:var(--text-faint)}
+.card-title{font-family:var(--cond);font-size:18px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--white);line-height:1.1}
+.card-sub{font-size:10px;color:var(--text-dim);letter-spacing:.04em;line-height:1.5}
+.card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.ctag{font-family:var(--cond);font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid var(--border);color:var(--text-dim)}
+/* Coming soon dimmed */
+.game-card.coming .card-cover{filter:saturate(.4) brightness(.7)}
+.game-card.coming{opacity:.82}
+ 
+/* ── CSS COVER ART PER GAME ── */
+/* ODE 3D */
+.gc-ode3d{background:radial-gradient(ellipse at 50% 30%,#002535 0%,#001020 55%,#000810 100%)}
+.gc-ode3d .gf{position:absolute;bottom:0;left:0;right:0;height:52%;background-image:linear-gradient(rgba(0,229,255,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.1) 1px,transparent 1px);background-size:28px 28px;transform:perspective(280px) rotateX(52deg);transform-origin:bottom}
+.gc-ode3d .csym{position:absolute;font-family:var(--mono);font-size:11px;color:rgba(0,229,255,.55);animation:eqFloat var(--d,6s) ease-in-out infinite}
+.gc-ode3d .ch{position:absolute;top:35%;left:50%;transform:translate(-50%,-50%)}
+.gc-ode3d .cname{position:absolute;bottom:50%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:32px;font-weight:900;letter-spacing:.1em;color:rgba(255,255,255,.9);text-shadow:0 0 20px rgba(0,229,255,.5);white-space:nowrap}
+/* Stochastic Drift */
+.gc-stoch{background:linear-gradient(160deg,#060820 0%,#0a0f28 50%,#06081a 100%)}
+.gc-stoch .sym-bg{position:absolute;top:20%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:80px;font-weight:900;color:rgba(127,255,140,.06);letter-spacing:-.02em}
+.gc-stoch .wave{position:absolute;left:0;right:0;opacity:.5}
+/* BioSim */
+.gc-bio{background:linear-gradient(160deg,#001a0c 0%,#002a14 50%,#001008 100%)}
+.gc-bio .sym-bg{position:absolute;top:18%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:72px;font-weight:900;color:rgba(127,255,140,.07)}
+/* Cellular Architect */
+.gc-cell{background:linear-gradient(160deg,#150800 0%,#200f00 50%,#0e0500 100%)}
+.gc-cell .cpx{position:absolute;inset:0;background-image:linear-gradient(rgba(255,107,53,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,53,.06) 1px,transparent 1px);background-size:16px 16px}
+/* Black Scholes Terminal */
+.gc-bst{background:linear-gradient(160deg,#020d04 0%,#041508 50%,#010804 100%)}
+.gc-bst .terminal-cursor-bg{position:absolute;top:30%;left:20%;font-family:var(--mono);font-size:11px;color:rgba(127,255,140,.4);line-height:1.8}
+/* Matrix Field */
+.gc-matrix{background:#000800}
+.gc-matrix .matrix-rain{position:absolute;inset:0;overflow:hidden}
+/* Fourier's Quest */
+.gc-fourier{background:linear-gradient(160deg,#0c0018 0%,#140025 50%,#080012 100%)}
+.gc-fourier .sym-bg{position:absolute;top:20%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:64px;font-weight:900;color:rgba(200,100,255,.08)}
+ 
+/* ── PANEL OVERLAY ── */
+#panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:500;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s}
+#panel-overlay.show{opacity:1;visibility:visible}
+ 
+/* ── GAME DETAIL PANEL ── */
+#game-panel{position:fixed;top:0;right:0;bottom:0;width:480px;max-width:100vw;z-index:501;transform:translateX(100%);transition:transform .4s cubic-bezier(.16,1,.3,1);background:var(--bg2);border-left:1px solid var(--border);overflow-y:auto;overflow-x:hidden}
+#game-panel.open{transform:translateX(0)}
+.panel-close{position:sticky;top:0;z-index:10;background:var(--bg2);padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-close-btn{background:none;border:1px solid var(--border);color:var(--text-dim);width:32px;height:32px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .2s,color .2s;font-family:var(--mono);font-size:16px}
+.panel-close-btn:hover{border-color:var(--accent);color:var(--accent)}
+.panel-breadcrumb{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase}
+.panel-cover{width:100%;aspect-ratio:16/9;position:relative;overflow:hidden}
+.panel-body{padding:28px 24px;display:flex;flex-direction:column;gap:24px}
+/* Panel top info */
+.panel-title-row{display:flex;flex-direction:column;gap:6px}
+.panel-genre-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.panel-genre-tag{font-family:var(--cond);font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:3px 10px;border-radius:3px;border:1px solid var(--border);color:var(--text-dim)}
+.panel-title{font-family:var(--cond);font-size:42px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--white);line-height:.95}
+.panel-sub{font-size:12px;color:var(--text-dim);letter-spacing:.04em;margin-top:2px}
+.panel-dev{font-size:11px;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;font-family:var(--cond);font-weight:600}
+.panel-desc{font-size:13px;color:var(--text);line-height:1.8}
+/* Status section */
+.panel-divider{height:1px;background:var(--border)}
+/* ESRB */
+.esrb-section{display:flex;flex-direction:column;gap:12px}
+.esrb-label{font-family:var(--cond);font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim)}
+.esrb-wrap{display:flex;align-items:center;gap:16px}
+.esrb-badge{display:flex;align-items:stretch;border:2px solid var(--white);border-radius:4px;overflow:hidden;font-family:var(--cond);font-weight:700}
+.esrb-letter{background:var(--white);color:#000;font-size:28px;font-weight:900;width:42px;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em}
+.esrb-right{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 8px;gap:1px}
+.esrb-label-sm{font-size:8px;letter-spacing:.15em;color:rgba(255,255,255,.7);text-transform:uppercase;line-height:1}
+.esrb-rating{font-size:16px;color:var(--white);letter-spacing:.04em;line-height:1}
+.esrb-desc-text{display:flex;flex-direction:column;gap:3px}
+.esrb-rating-full{font-family:var(--cond);font-size:14px;font-weight:700;color:var(--white);letter-spacing:.04em}
+.esrb-content-desc{font-size:11px;color:var(--text-dim);line-height:1.5}
+/* Controls */
+.controls-section{display:flex;flex-direction:column;gap:12px}
+.ctrl-section-label{font-family:var(--cond);font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim)}
+.ctrl-group{display:flex;flex-direction:column;gap:4px}
+.ctrl-group-name{font-family:var(--cond);font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;margin-top:8px}
+.ctrl-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.ctrl-row:last-child{border-bottom:none}
+.ctrl-keys{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+kbd{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:26px;padding:0 6px;background:var(--surface);border:1px solid rgba(255,255,255,.2);border-bottom:3px solid rgba(255,255,255,.1);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--white);font-weight:600;letter-spacing:.04em;box-shadow:0 2px 0 rgba(0,0,0,.4)}
+kbd.wide{min-width:52px}.kbd-mouse{min-width:44px;font-size:9px}
+.ctrl-action{font-size:12px;color:var(--text-dim);letter-spacing:.04em;text-align:right}
+/* Panel play button */
+.panel-play-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:16px;background:var(--accent);color:var(--bg);font-family:var(--cond);font-size:17px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;transition:all .2s;margin-top:4px}
+.panel-play-btn:hover{background:#33eeff;box-shadow:0 8px 28px rgba(0,229,255,.3);transform:translateY(-1px)}
+.panel-play-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
+.panel-coming-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;background:var(--surface);color:var(--text-dim);font-family:var(--cond);font-size:17px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--border);border-radius:6px;cursor:default;margin-top:4px}
+ 
+/* ── FOOTER ── */
+.pg-footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-items:center;justify-content:space-between;background:var(--bg)}
+.pg-footer-brand{font-family:var(--cond);font-size:16px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)}
+.pg-footer-brand span{color:var(--accent)}
+.pg-footer a{font-family:var(--cond);font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;transition:color .2s}
+.pg-footer a:hover{color:var(--accent)}
+ 
+/* ── MOBILE ── */
+@media(max-width:1100px){.game-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){
+  body{cursor:auto}#cursor,#cursor-ring{display:none}
+  nav{padding:0 20px}
+  .store-hero{grid-template-columns:1fr;min-height:auto}
+  .store-hero::after{background:linear-gradient(0deg,rgba(6,8,14,.98) 40%,rgba(6,8,14,.6) 70%,transparent 100%)}
+  .hero-art-wrap{height:340px;position:relative}
+  .hero-content{padding:24px 20px 32px}
+  .game-grid{grid-template-columns:repeat(2,1fr)}
+  .game-grid-wrap{padding:0 20px 60px}
+  .section-header-ps{padding:32px 20px 20px}
+  .store-tabs-wrap{padding:0 20px}
+  #game-panel{width:100%;border-left:none;border-top:1px solid var(--border);bottom:0;top:auto;height:92vh;transform:translateY(100%)}
+  #game-panel.open{transform:translateY(0)}
+  .pg-footer{padding:24px 20px;flex-direction:column;gap:12px;text-align:center}
+  .nav-count{display:none}
+}
+@media(max-width:480px){
+  .game-grid{grid-template-columns:1fr 1fr}
+  .hero-title{font-size:52px}
+}
+</style>
+</head>
+<body>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+<div id="panel-overlay" onclick="closePanel()"></div>
+<div id="game-panel"></div>
+ 
+<!-- ── TICKER ── -->
+<div class="promo-ticker">
+  <div class="ticker-track" id="ticker"></div>
+</div>
+ 
+<!-- ── NAV ── -->
+<nav>
+  <a href="index.html" class="nav-back">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Portfolio
+  </a>
+  <div class="nav-studio">DeShrimpo <span>Game</span> Studio</div>
+  <div class="nav-count" id="nav-count">11 Titles</div>
+</nav>
+ 
+<!-- ── HERO ── -->
+<div class="store-hero" onclick="openPanel('ode3d')" title="View ODE 3D details">
+  <div class="hero-art-wrap">
+    <div class="hero-game-art art-ode3d" id="hero-art">
+      <img src="file:///C:/Users/anthp/Pictures/Screenshots/Screenshot 2026-05-06 135826.png" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" onerror="this.style.display='none'"/>
+      <div class="grid-floor"></div>
+      <div class="glow-sphere"></div>
+      <div class="eq-float" style="top:12%;left:58%;font-size:13px;--r:-8deg;--d:7s">∂f/∂t</div>
+      <div class="eq-float" style="top:22%;left:72%;font-size:11px;--r:5deg;--d:9s">dy/dx = f(x,y)</div>
+      <div class="eq-float" style="top:32%;left:62%;font-size:12px;--r:-3deg;--d:5.5s;color:rgba(127,255,140,.5)">∇²V = 0</div>
+      <div class="eq-float" style="top:16%;left:80%;font-size:10px;--r:10deg;--d:8s;color:rgba(255,107,53,.5)">Δx → 0</div>
+      <div class="eq-float" style="top:52%;left:66%;font-size:11px;--r:-5deg;--d:6.5s">∫₀ᵀ f(t) dt</div>
+      <svg class="crosshair" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="28" stroke="rgba(0,229,255,.8)" fill="none" stroke-width="1.5"/>
+        <circle cx="40" cy="40" r="4" stroke="rgba(0,229,255,.9)" fill="rgba(0,229,255,.2)" stroke-width="1.5"/>
+        <line x1="40" y1="4" x2="40" y2="22" stroke="rgba(0,229,255,.6)" stroke-width="1"/>
+        <line x1="40" y1="58" x2="40" y2="76" stroke="rgba(0,229,255,.6)" stroke-width="1"/>
+        <line x1="4" y1="40" x2="22" y2="40" stroke="rgba(0,229,255,.6)" stroke-width="1"/>
+        <line x1="58" y1="40" x2="76" y2="40" stroke="rgba(0,229,255,.6)" stroke-width="1"/>
+        <line x1="22" y1="22" x2="28" y2="28" stroke="rgba(0,229,255,.3)" stroke-width="1"/>
+        <line x1="52" y1="52" x2="58" y2="58" stroke="rgba(0,229,255,.3)" stroke-width="1"/>
+        <line x1="58" y1="22" x2="52" y2="28" stroke="rgba(0,229,255,.3)" stroke-width="1"/>
+        <line x1="22" y1="58" x2="28" y2="52" stroke="rgba(0,229,255,.3)" stroke-width="1"/>
+      </svg>
+      <div class="scan-overlay"></div>
+    </div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-meta">
+      <span class="hero-live-badge">Free to Play — Available Now</span>
+      <span class="hero-num">Title 01 of 11</span>
+      <span class="hero-esrb-mini">E10+</span>
+    </div>
+    <div class="hero-title"><span>Featured Title</span>ODE 3D</div>
+    <p class="hero-sub">A first-person shooter where the battlefield is governed by differential equations. Neutralize hostile drones to recover ammo and health, collect all scattered equation parameters, and access the central Terminal to build the ODE before time runs out.</p>
+    <div class="hero-tags">
+      <span class="hero-tag">FPS</span>
+      <span class="hero-tag">Educational</span>
+      <span class="hero-tag">Math</span>
+      <span class="hero-tag">Python</span>
+    </div>
+    <button class="hero-btn">
+      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      View Details
+    </button>
+  </div>
+</div>
+ 
+<!-- ── STORE TABS ── -->
+<div class="store-tabs-wrap">
+  <div class="store-tabs">
+    <button class="stab active" data-filter="all">All Games</button>
+    <button class="stab" data-filter="action">Action</button>
+    <button class="stab" data-filter="simulation">Simulation</button>
+    <button class="stab" data-filter="educational">Educational</button>
+    <button class="stab" data-filter="coming-soon">Coming Soon</button>
+  </div>
+</div>
+ 
+<!-- ── GAME LIBRARY ── -->
+<div class="section-header-ps">
+  <div class="sh-left">
+    <div class="sh-eyebrow">DeShrimpo Game Studio — Full Catalog</div>
+    <div class="sh-title">Game Library</div>
+  </div>
+  <div class="sh-right"><span id="visible-count">11</span> Titles Available</div>
+</div>
+<div class="game-grid-wrap">
+  <div class="game-grid" id="gameGrid"></div>
+</div>
+ 
+<!-- ── FOOTER ── -->
+<footer class="pg-footer">
+  <div class="pg-footer-brand">DeShrimpo <span>Game</span> Studio &nbsp;—&nbsp; All Games Free to Play</div>
+  <a href="index.html">← Back to Portfolio</a>
+</footer>
+ 
+<script>
+/* ─── CURSOR ─── */
+const cur=document.getElementById('cursor'),curR=document.getElementById('cursor-ring');
+if(cur){document.addEventListener('mousemove',e=>{cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';setTimeout(()=>{curR.style.left=e.clientX+'px';curR.style.top=e.clientY+'px';},60);});}
+ 
+/* ─── GAME DATA ─── */
+const GAMES=[
+  {
+    id:'ode3d',num:'01',
+    title:'ODE 3D',sub:'Interactive Differential Equations FPS',
+    dev:'DeShrimpo Game Studio',year:'2026',
+    genre:['FPS','Educational','Action'],filter:['action','educational'],
+    status:'available',esrb:'E10+',
+    esrbFull:'Everyone 10 and Older',
+    esrbDesc:'Fantasy Violence · Educational Content · Mild Cartoon Violence',
+    desc:'Step into a first-person shooter where the battlefield is governed entirely by differential equations. Neutralize hostile drones to recover ammo and health pickups. Collect all scattered equation parameters scattered across the arena, then access the central Terminal to build the ODE before time runs out. Navigate dynamically evolving environments where enemy behavior and weapon mechanics are derived from real ODE solutions — the first educational math game built as a real 3D FPS.',
+    descShort:'The first FPS governed by differential equations. Solve ODEs to survive.',
+    tags:['Math-FPS','Python','3D Rendering','ODEs'],
+    accentColor:'#00e5ff',
+    controls:[
+      {group:'Movement',rows:[
+        {keys:['W','A','S','D'],action:'Move'},
+        {keys:['↑','↓','←','→'],action:'Move (Alt)'},
+        {keys:['SPACE'],action:'Jump'},
+        {keys:['SHIFT'],action:'Sprint'},
+      ]},
+      {group:'Combat',rows:[
+        {keys:['LMB'],action:'Fire / Solve Equation'},
+        {keys:['RMB'],action:'Aim Down Sights'},
+        {keys:['R'],action:'Reload'},
+        {keys:['1','2','3'],action:'Switch Weapon'},
+      ]},
+      {group:'Interface',rows:[
+        {keys:['E'],action:'Interact / Open Equation'},
+        {keys:['TAB'],action:'Equation Log'},
+        {keys:['F1'],action:'Game Info / Help'},
+        {keys:['MOUSE'],action:'Camera / Look'},
+        {keys:['ESC'],action:'Pause Menu'},
+      ]},
+    ],
+  },
+  {
+    id:'stochastic-drift',num:'02',
+    title:'Stochastic Drift',sub:'Survive the Noise',
+    dev:'DeShrimpo Game Studio',year:'TBA',
+    genre:['Simulation','Strategy'],filter:['simulation'],
+    status:'coming-soon',esrb:'TBD',esrbFull:'Rating Pending',esrbDesc:'—',
+    desc:'Navigate a stochastic world governed by Geometric Brownian Motion and Itô calculus. Manage volatility, drift, and random shocks across a dynamically generated financial landscape. Every playthrough is statistically unique — no two sessions share the same probability path.',
+    descShort:'A strategy sim where GBM and stochastic calculus rule every outcome.',
+    tags:['GBM','Stochastic','Strategy'],accentColor:'#7fff8c',controls:[],
+  },
+  {
+    id:'biosim',num:'03',
+    title:'BioSim: Fishery',sub:'Bioeconomic Management Simulator',
+    dev:'DeShrimpo Game Studio',year:'TBA',
+    genre:['Simulation','Strategy'],filter:['simulation'],
+    status:'coming-soon',esrb:'TBD',esrbFull:'Rating Pending',esrbDesc:'—',
+    desc:'Manage a single-species fishery under economic pressures, seasonal market shocks, and environmental stochasticity. Apply Black-Scholes PDE pricing and real options analysis to determine the optimal harvest schedule before the stock collapses.',
+    descShort:'A bioeconomic fishery sim — harvest wisely or face collapse.',
+    tags:['Ecology','Black-Scholes','Optimization'],accentColor:'#7fff8c',controls:[],
+  },
+  {
+    id:'cellular-arch',num:'04',
+    title:'Cellular Architect',sub:'Rule the Grid',
+    dev:'DeShrimpo Game Studio',year:'TBA',
+    genre:['Puzzle','Simulation'],filter:['simulation'],
+    status:'coming-soon',esrb:'TBD',esrbFull:'Rating Pending',esrbDesc:'—',
+    desc:'Design, evolve, and compete using cellular automaton systems. Define transition rules and watch emergence unfold. Challenge modes pit your rule sets against others — the most complex self-organized structure wins.',
+    descShort:'Design automaton rule sets. Watch complexity emerge from simplicity.',
+    tags:['Cellular Automata','Emergence','Puzzle'],accentColor:'#ff6b35',controls:[],
+  },
+  {
+    id:'bst',num:'05',
+    title:'Black-Scholes Terminal',sub:'Options. Risk. Ruin.',
+    dev:'DeShrimpo Game Studio',year:'TBA',
+    genre:['Strategy','Finance'],filter:['simulation'],
+    status:'coming-soon',esrb:'TBD',esrbFull:'Rating Pending',esrbDesc:'—',
+    desc:'A high-stakes derivatives trading simulation powered by the actual Black-Scholes PDE. Price calls and puts, delta-hedge positions, and survive market crashes using quantitative finance. Your opponents are volatility itself.',
+    descShort:'Price derivatives, hedge deltas, and survive market ruin.',
+    tags:['Finance','PDE','Derivatives'],accentColor:'#7fff8c',controls:[],
+  },
+  {
+    id:'matrix-field',num:'06',
+    title:'Matrix Field',sub:'Enter the Vector Space',
+    dev:'DeShrimpo Game Studio',year:'TBA',
+    genre:['Action','Puzzle'],filter:['action'],
+    status:'coming-soon',esrb:'TBD',esrbFull:'Rating Pending',esrbDesc:'—',
+    desc:'Traverse a world built entirely from linear algebra. Transform environments via matrix operations, escape eigenvector traps, and defeat enemies using determinant-powered special abilities. The world bends to your algebraic will.',
+    descShort:'An action-puzzle where linear algebra reshapes the physical world.',
+    tags:['Linear Algebra','Action','Transformation'],accentColor:'#00ff88',controls:[],
+  },
+  {
+    id:'fouriers-quest',num:'07',
+    title:"Fourier's Quest",sub:'The Frequency Dimension',
+    dev:'DeShrimpo Game Studio',year:'TBA',
+    genre:['Adventure','Educational'],filter:['educational'],
+    status:'coming-soon',esrb:'TBD',esrbFull:'Rating Pending',esrbDesc:'—',
+    desc:'Embark on an adventure through the frequency domain. Decompose enemy signals using Fourier transforms, reconstruct shattered environments from their spectral components, and build harmony-based weapons by composing sine waves into devastating interference patterns.',
+    descShort:'An adventure through the frequency domain — Fourier transforms as power.',
+    tags:['Fourier Analysis','Signal Processing','Adventure'],accentColor:'#cc88ff',controls:[],
+  },
+  /* ── 2025 CATALOGUE ── */
+  {
+    id:'west-highland-terror',num:'08',
+    title:'The West Highland Terror',sub:'Escape the Spooky House',
+    dev:'DeShrimpo Game Studio',year:'2025',
+    genre:['Horror','Survival','Action'],filter:['action'],
+    status:'available',esrb:'E10+',
+    esrbFull:'Everyone 10 and Older',
+    esrbDesc:'Mild Cartoon Horror · Mild Fantasy Violence',
+    desc:"Wake up — you're trapped in a spooky house with a white, fluffy Chump on the loose. You need to escape and survive!\n\nYour flashlight has limited energy, so hunt for batteries to keep the light alive. Collect all 3 keys scattered throughout the house to unlock the exit. Approach the door once you have every key to make your escape. Stay quiet, stay sharp, and don't let the Chump catch you.",
+    descShort:'Trapped in a spooky house with a fluffy Chump on the loose — collect 3 keys and escape.',
+    tags:['Horror','Survival','Keys'],accentColor:'#ff8c42',
+    controls:[
+      {group:'Movement',rows:[
+        {keys:['W','A','S','D'],action:'Move & Turn'},
+        {keys:['↑','↓','←','→'],action:'Move & Turn (Alt)'},
+      ]},
+      {group:'Objective',rows:[
+        {keys:['E'],action:'Pick Up Item / Interact'},
+        {keys:['F'],action:'Toggle Flashlight'},
+      ]},
+    ],
+  },
+  {
+    id:'dogmother-3d',num:'09',
+    title:'The DogMother 3D',sub:'The DeShrimpo Crime Family',
+    dev:'DeShrimpo Game Studio',year:'2025',
+    genre:['Action','Shooter','3D'],filter:['action'],
+    status:'available',esrb:'T',
+    esrbFull:'Teen',
+    esrbDesc:'Cartoon Violence · Mild Suggestive Themes · Crime Scenario',
+    desc:"You come to me to play my video game without bringing me any dog treats. After becoming the new DogMother for the DeShrimpo Crime Family in Scotland, the Squirrel Crime Family took action and stole 6 valuable items of Daisy's — and now she needs to get them back. Track down every stolen item, avoid enemy squirrels, and reach the getaway car to win.",
+    descShort:'Become the DogMother, reclaim 6 stolen items, and escape the Squirrel Crime Family.',
+    tags:['Crime','Shooter','3D','Dogs'],accentColor:'#ffd700',
+    controls:[
+      {group:'Movement',rows:[
+        {keys:['W','A','S','D'],action:'Move Forward / Back'},
+        {keys:['↑','↓','←','→'],action:'Move (Alt)'},
+        {keys:['A','D'],action:'Strafe Left / Right'},
+      ]},
+      {group:'Combat',rows:[
+        {keys:['SPACE'],action:'Shoot'},
+      ]},
+      {group:'Interface',rows:[
+        {keys:['P'],action:'Pause Game'},
+      ]},
+    ],
+  },
+  {
+    id:'space-escape-3d',num:'10',
+    title:'The Space Escape 3D',sub:'Galactic Robot War XI',
+    dev:'DeShrimpo Game Studio',year:'2025',
+    genre:['Action','Sci-Fi','Shooter'],filter:['action'],
+    status:'available',esrb:'T',
+    esrbFull:'Teen',
+    esrbDesc:'Sci-Fi Violence · Cartoon Explosions · Mild Intensity',
+    desc:"The Galactic Robot War XI has reached your home planet. Defeat all enemies and find the key to your spaceship to escape! Collect health and ammo pickups scattered across the battlefield to survive the onslaught — then make your getaway before it's too late.",
+    descShort:'Survive Galactic Robot War XI — defeat all enemies and find the key to your spaceship.',
+    tags:['Sci-Fi','Shooter','Space','3D'],accentColor:'#8888ff',
+    controls:[
+      {group:'Movement',rows:[
+        {keys:['W','A','S','D'],action:'Move / Look Around'},
+        {keys:['↑','↓','←','→'],action:'Move / Look (Alt)'},
+        {keys:['A','D'],action:'Strafe Left / Right'},
+      ]},
+      {group:'Combat',rows:[
+        {keys:['SPACE'],action:'Fire Weapon'},
+      ]},
+      {group:'Interface',rows:[
+        {keys:['P'],action:'Pause Game'},
+      ]},
+    ],
+  },
+  {
+    id:'mgs-ttt',num:'11',
+    title:'MGS: Tic-Tac-Tactical',sub:'Mission Briefing — Engage in Battle',
+    dev:'DeShrimpo Game Studio',year:'2025',
+    genre:['Strategy','Puzzle'],filter:['action'],
+    status:'available',esrb:'E',
+    esrbFull:'Everyone',
+    esrbDesc:'Mild Cartoon Themes · Strategic Combat',
+    desc:"Welcome, operative. Prepare for a one-on-one boss duel with Solid Snake's biggest enemies in the most tactical game of Tic-Tac-Toe ever devised. Select your square wisely — one wrong move and the mission is compromised. Click Engage in Battle to start the fight and prove your tactical superiority on the grid.",
+    descShort:"A Metal Gear Solid-themed Tic-Tac-Toe boss duel. Click Engage in Battle to start the fight.",
+    tags:['Strategy','MGS','Puzzle','Tactical'],accentColor:'#7fff8c',
+    controls:[
+      {group:'Gameplay',rows:[
+        {keys:['MOUSE'],action:'Click Square to Place Mark'},
+      ]},
+    ],
+  },
+];
+ 
+/* ─── COVER ART SVG GENERATORS ─── */
+function coverArt(game){
+  const id=game.id;
+  if(id==='ode3d') return`<div class="gc-ode3d" style="width:100%;height:100%;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#002535 0%,#001020 55%,#000810 100%)">
+    <img src="file:///C:/Users/anthp/Pictures/Screenshots/Screenshot 2026-05-06 135826.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1" onerror="this.style.display='none'"/>
+    <div class="gf" style="position:absolute;bottom:0;left:0;right:0;height:52%;background-image:linear-gradient(rgba(0,229,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.12) 1px,transparent 1px);background-size:28px 28px;transform:perspective(280px) rotateX(52deg);transform-origin:bottom;z-index:2"></div>
+    <div style="position:absolute;top:14%;left:18%;font-family:var(--mono);font-size:10px;color:rgba(0,229,255,.5);animation:eqFloat 7s ease-in-out infinite;z-index:2">∂f/∂t</div>
+    <div style="position:absolute;top:26%;left:60%;font-family:var(--mono);font-size:9px;color:rgba(127,255,140,.45);animation:eqFloat 9s ease-in-out infinite;z-index:2">dy/dx=f(x)</div>
+    <div style="position:absolute;top:42%;left:30%;font-family:var(--mono);font-size:9px;color:rgba(0,229,255,.4);animation:eqFloat 6s ease-in-out infinite;z-index:2">∫₀ᵀf(t)dt</div>
+    <svg style="position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;z-index:2" viewBox="0 0 56 56">
+      <circle cx="28" cy="28" r="20" stroke="rgba(0,229,255,.8)" fill="none" stroke-width="1.2"/>
+      <circle cx="28" cy="28" r="3" stroke="rgba(0,229,255,.9)" fill="rgba(0,229,255,.3)" stroke-width="1"/>
+      <line x1="28" y1="4" x2="28" y2="15" stroke="rgba(0,229,255,.5)" stroke-width="1"/>
+      <line x1="28" y1="41" x2="28" y2="52" stroke="rgba(0,229,255,.5)" stroke-width="1"/>
+      <line x1="4" y1="28" x2="15" y2="28" stroke="rgba(0,229,255,.5)" stroke-width="1"/>
+      <line x1="41" y1="28" x2="52" y2="28" stroke="rgba(0,229,255,.5)" stroke-width="1"/>
+    </svg>
+    <div style="position:absolute;bottom:52%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:22px;font-weight:900;letter-spacing:.08em;color:rgba(255,255,255,.9);text-shadow:0 0 16px rgba(0,229,255,.6);white-space:nowrap;z-index:3">ODE 3D</div>
+    <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.07) 3px,rgba(0,0,0,.07) 4px);pointer-events:none;z-index:4"></div>
+  </div>`;
+ 
+  if(id==='stochastic-drift') return`<div style="width:100%;height:100%;background:linear-gradient(160deg,#060820 0%,#0a0f28 50%,#06081a 100%);position:relative;overflow:hidden">
+    <div style="position:absolute;top:15%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:70px;font-weight:900;color:rgba(127,255,140,.06);white-space:nowrap;letter-spacing:-.02em">σ²dt+dW</div>
+    <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 200 300" preserveAspectRatio="none">
+      <path d="M0,200 Q20,180 40,195 Q60,210 80,175 Q100,140 120,160 Q140,180 160,145 Q180,110 200,130" stroke="rgba(127,255,140,.4)" fill="none" stroke-width="1.5"/>
+      <path d="M0,220 Q30,200 60,215 Q90,230 120,200 Q150,170 180,185 Q190,190 200,180" stroke="rgba(0,229,255,.25)" fill="none" stroke-width="1" stroke-dasharray="4,6"/>
+    </svg>
+    <div style="position:absolute;bottom:52%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:19px;font-weight:900;letter-spacing:.06em;color:rgba(255,255,255,.85);white-space:nowrap;text-shadow:0 0 12px rgba(127,255,140,.4)">STOCHASTIC DRIFT</div>
+  </div>`;
+ 
+  if(id==='biosim') return`<div style="width:100%;height:100%;background:linear-gradient(160deg,#001a0c 0%,#002a14 50%,#001008 100%);position:relative;overflow:hidden">
+    <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 200 300" preserveAspectRatio="none">
+      <path d="M0,200 Q25,160 50,175 Q75,190 100,150 Q125,110 150,130 Q175,150 200,120" stroke="rgba(127,255,140,.5)" fill="none" stroke-width="1.5"/>
+      <path d="M0,230 Q50,230 100,230 Q150,230 200,230" stroke="rgba(127,255,140,.15)" fill="none" stroke-width="1"/>
+      <ellipse cx="60" cy="180" rx="8" ry="4" fill="rgba(0,229,255,.15)" style="animation:eqFloat 4s ease-in-out infinite"/>
+      <ellipse cx="130" cy="145" rx="6" ry="3" fill="rgba(0,229,255,.15)"/>
+      <ellipse cx="170" cy="122" rx="7" ry="3.5" fill="rgba(0,229,255,.1)"/>
+    </svg>
+    <div style="position:absolute;top:14%;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:12px;color:rgba(127,255,140,.5);white-space:nowrap">P'(t) = rP(1-P/K) - H</div>
+    <div style="position:absolute;bottom:52%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:18px;font-weight:900;letter-spacing:.06em;color:rgba(255,255,255,.85);white-space:nowrap;text-shadow:0 0 12px rgba(127,255,140,.4)">BIOSIM: FISHERY</div>
+  </div>`;
+ 
+  if(id==='cellular-arch') return`<div style="width:100%;height:100%;background:linear-gradient(160deg,#150800 0%,#200f00 50%,#0e0500 100%);position:relative;overflow:hidden">
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,107,53,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,53,.08) 1px,transparent 1px);background-size:16px 16px"></div>
+    <div id="ca-cells" style="position:absolute;inset:0;overflow:hidden"></div>
+    <div style="position:absolute;bottom:52%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:16px;font-weight:900;letter-spacing:.06em;color:rgba(255,255,255,.85);white-space:nowrap;text-shadow:0 0 12px rgba(255,107,53,.5)">CELLULAR ARCHITECT</div>
+  </div>`;
+ 
+  if(id==='bst') return`<div style="width:100%;height:100%;background:linear-gradient(160deg,#020d04 0%,#041508 50%,#010804 100%);position:relative;overflow:hidden">
+    <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 200 300" preserveAspectRatio="none">
+      <path d="M0,250 L20,240 L40,245 L60,230 L80,210 L100,195 L120,185 L140,160 L160,145 L180,120 L200,100" stroke="rgba(127,255,140,.6)" fill="none" stroke-width="1.5"/>
+      <line x1="0" y1="250" x2="200" y2="250" stroke="rgba(127,255,140,.1)" stroke-width="1"/>
+      <line x1="0" y1="200" x2="200" y2="200" stroke="rgba(127,255,140,.07)" stroke-width="1" stroke-dasharray="4,6"/>
+    </svg>
+    <div style="position:absolute;top:14%;left:10%;font-family:var(--mono);font-size:9px;color:rgba(127,255,140,.4);line-height:1.9">C = SN(d₁)−Ke⁻ʳᵀN(d₂)<br/>∂C/∂t + ½σ²S²∂²C/∂S²<br/>+ rS∂C/∂S − rC = 0</div>
+    <div style="position:absolute;bottom:52%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:14px;font-weight:900;letter-spacing:.06em;color:rgba(255,255,255,.85);white-space:nowrap;text-shadow:0 0 12px rgba(127,255,140,.4)">BLACK-SCHOLES TERMINAL</div>
+  </div>`;
+ 
+  if(id==='matrix-field') return`<div style="width:100%;height:100%;background:#000800;position:relative;overflow:hidden">
+    <canvas id="matrix-canvas-card" style="position:absolute;inset:0;width:100%;height:100%;opacity:.7"></canvas>
+    <div style="position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-family:var(--mono);font-size:36px;font-weight:700;color:rgba(0,255,65,.7);text-shadow:0 0 20px rgba(0,255,65,.5);text-align:center">[A]</div>
+    <div style="position:absolute;bottom:52%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:18px;font-weight:900;letter-spacing:.06em;color:rgba(255,255,255,.85);white-space:nowrap;text-shadow:0 0 12px rgba(0,255,65,.4)">MATRIX FIELD</div>
+  </div>`;
+ 
+  if(id==='fouriers-quest') return`<div style="width:100%;height:100%;background:linear-gradient(160deg,#0c0018 0%,#140025 50%,#080012 100%);position:relative;overflow:hidden">
+    <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 200 300" preserveAspectRatio="none">
+      <path d="M0,150 Q25,100 50,150 Q75,200 100,150 Q125,100 150,150 Q175,200 200,150" stroke="rgba(200,100,255,.5)" fill="none" stroke-width="1.5"/>
+      <path d="M0,150 Q12.5,117 25,150 Q37.5,183 50,150 Q62.5,117 75,150 Q87.5,183 100,150 Q112.5,117 125,150 Q137.5,183 150,150 Q162.5,117 175,150 Q187.5,183 200,150" stroke="rgba(0,229,255,.3)" fill="none" stroke-width="1" stroke-dasharray="3,4"/>
+      <path d="M0,150 Q50,80 100,150 Q150,220 200,150" stroke="rgba(200,100,255,.2)" fill="none" stroke-width="1"/>
+    </svg>
+    <div style="position:absolute;top:16%;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:10px;color:rgba(200,100,255,.5);white-space:nowrap">f̂(ξ) = ∫f(x)e⁻²πiξx dx</div>
+    <div style="position:absolute;bottom:52%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:17px;font-weight:900;letter-spacing:.06em;color:rgba(255,255,255,.85);white-space:nowrap;text-shadow:0 0 12px rgba(200,100,255,.4)">FOURIER'S QUEST</div>
+  </div>`;
+ 
+  if(id==='west-highland-terror') return`<div style="width:100%;height:100%;background:linear-gradient(160deg,#0d0308 0%,#1a0510 50%,#0a0208 100%);position:relative;overflow:hidden">
+    <img src="file:///C:/Users/anthp/Downloads/Portfolio/Screenshot 2025-12-21 195655.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1" onerror="this.style.display='none'"/>
+    <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px);pointer-events:none;z-index:2"></div>
+    <div style="position:absolute;bottom:52%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:13px;font-weight:900;letter-spacing:.06em;color:rgba(255,255,255,.9);white-space:nowrap;text-shadow:0 0 14px rgba(255,140,66,.6);z-index:3">THE WEST HIGHLAND TERROR</div>
+  </div>`;
+ 
+  if(id==='dogmother-3d') return`<div style="width:100%;height:100%;background:linear-gradient(160deg,#0c0b00 0%,#1a1700 50%,#0a0900 100%);position:relative;overflow:hidden">
+    <img src="file:///C:/Users/anthp/Downloads/Portfolio/Screenshot 2025-12-21 192238.png" style="position:absolute;inset:0;width:150%;height:100%;object-fit:cover;z-index:1" onerror="this.style.display='none'"/>
+    <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px);pointer-events:none;z-index:2"></div>
+    <div style="position:absolute;bottom:52%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:15px;font-weight:900;letter-spacing:.06em;color:rgba(255,255,255,.9);white-space:nowrap;text-shadow:0 0 14px rgba(255,215,0,.5);z-index:3">THE DOGMOTHER 3D</div>
+  </div>`;
+ 
+  if(id==='space-escape-3d') return`<div style="width:100%;height:100%;background:linear-gradient(160deg,#000010 0%,#000820 50%,#00030f 100%);position:relative;overflow:hidden">
+    <img src="file:///C:/Users/anthp/Downloads/Portfolio/Screenshot 2025-12-21 230948.png" style="position:absolute;inset:0;width:115%;height:100%;object-fit:cover;z-index:1" onerror="this.style.display='none'"/>
+    <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px);pointer-events:none;z-index:2"></div>
+    <div style="position:absolute;bottom:52%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:14px;font-weight:900;letter-spacing:.06em;color:rgba(255,255,255,.9);white-space:nowrap;text-shadow:0 0 14px rgba(136,136,255,.6);z-index:3">THE SPACE ESCAPE 3D</div>
+  </div>`;
+ 
+  if(id==='mgs-ttt') return`<div style="width:100%;height:100%;background:linear-gradient(160deg,#020a02 0%,#061206 50%,#020802 100%);position:relative;overflow:hidden">
+    <!-- Radar sweep -->
+    <svg style="position:absolute;top:8%;right:6%;width:52px;height:52px;opacity:.5" viewBox="0 0 52 52">
+      <circle cx="26" cy="26" r="24" stroke="rgba(127,255,140,.35)" fill="none" stroke-width="1"/>
+      <circle cx="26" cy="26" r="16" stroke="rgba(127,255,140,.2)" fill="none" stroke-width="1"/>
+      <circle cx="26" cy="26" r="8" stroke="rgba(127,255,140,.2)" fill="none" stroke-width="1"/>
+      <line x1="26" y1="2" x2="26" y2="50" stroke="rgba(127,255,140,.15)" stroke-width=".8"/>
+      <line x1="2" y1="26" x2="50" y2="26" stroke="rgba(127,255,140,.15)" stroke-width=".8"/>
+      <line x1="26" y1="26" x2="48" y2="14" stroke="rgba(127,255,140,.7)" stroke-width="1.2" style="transform-origin:26px 26px;animation:radarSweep 3s linear infinite"/>
+    </svg>
+    <!-- Exclamation alert -->
+    <div style="position:absolute;top:12%;left:12%;font-family:var(--cond);font-size:42px;font-weight:900;color:rgba(255,200,0,.7);text-shadow:0 0 18px rgba(255,200,0,.5);animation:alertPulse 1.8s ease-in-out infinite;line-height:1">!</div>
+    <!-- Tic-Tac-Toe grid -->
+    <svg style="position:absolute;top:50%;left:50%;transform:translate(-50%,-62%);width:110px;height:110px;opacity:.85" viewBox="0 0 110 110">
+      <line x1="37" y1="8" x2="37" y2="102" stroke="rgba(127,255,140,.55)" stroke-width="2"/>
+      <line x1="73" y1="8" x2="73" y2="102" stroke="rgba(127,255,140,.55)" stroke-width="2"/>
+      <line x1="8" y1="37" x2="102" y2="37" stroke="rgba(127,255,140,.55)" stroke-width="2"/>
+      <line x1="8" y1="73" x2="102" y2="73" stroke="rgba(127,255,140,.55)" stroke-width="2"/>
+      <!-- X in top-left -->
+      <line x1="13" y1="13" x2="30" y2="30" stroke="rgba(255,80,80,.9)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="30" y1="13" x2="13" y2="30" stroke="rgba(255,80,80,.9)" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- O in center -->
+      <circle cx="55" cy="55" r="11" stroke="rgba(127,255,140,.95)" fill="none" stroke-width="2.5"/>
+      <!-- X in bottom-right -->
+      <line x1="80" y1="80" x2="97" y2="97" stroke="rgba(255,80,80,.8)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="97" y1="80" x2="80" y2="97" stroke="rgba(255,80,80,.8)" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <!-- CODEC-style bottom bar -->
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:6px 8px;background:rgba(0,20,0,.75);border-top:1px solid rgba(127,255,140,.2);font-family:var(--mono);font-size:8px;color:rgba(127,255,140,.6);letter-spacing:.1em;z-index:3">CODEC ▶ SNAKE: "This is just Tic-Tac-Toe..."</div>
+    <div style="position:absolute;bottom:52%;left:50%;transform:translateX(-50%);font-family:var(--cond);font-size:12px;font-weight:900;letter-spacing:.06em;color:rgba(255,255,255,.9);white-space:nowrap;text-shadow:0 0 12px rgba(127,255,140,.5);z-index:4">MGS: TIC-TAC-TACTICAL</div>
+    <style>@keyframes radarSweep{0%{transform:rotate(0deg);transform-origin:26px 26px;}100%{transform:rotate(360deg);transform-origin:26px 26px;}}@keyframes alertPulse{0%,100%{opacity:.7}50%{opacity:1;transform:scale(1.06)}}</style>
+  </div>`;
+ 
+  return`<div style="width:100%;height:100%;background:var(--surface);display:flex;align-items:center;justify-content:center"><span style="font-family:var(--cond);color:var(--text-faint);font-size:14px;letter-spacing:.1em">${game.title}</span></div>`;
+}
+ 
+/* Same art but wider for panel (16:9) */
+function coverArtPanel(game){
+  return coverArt(game); /* reuse, aspect ratio handled by container */
+}
+ 
+/* ─── RENDER CARDS ─── */
+function renderCards(filter='all'){
+  const grid=document.getElementById('gameGrid');
+  const visible=filter==='all'?GAMES:GAMES.filter(g=>g.filter.includes(filter)||(filter==='coming-soon'&&g.status==='coming-soon'));
+  document.getElementById('visible-count').textContent=visible.length;
+  document.getElementById('nav-count').textContent=GAMES.length+' Titles';
+  const total=String(GAMES.length).padStart(2,'0');
+  grid.innerHTML='';
+  visible.forEach((g,i)=>{
+    const card=document.createElement('div');
+    card.className='game-card'+(g.status==='coming-soon'?' coming':'');
+    card.style.setProperty('--card-accent',g.accentColor);
+    card.style.animationDelay=(i*.06)+'s';
+    card.innerHTML=`
+      <div class="card-cover">
+        ${coverArt(g)}
+        <div class="card-scan"></div>
+        <div class="card-badges">
+          ${g.status==='available'?'<span class="cbadge cbadge-free">Free</span><span class="cbadge cbadge-new">Available</span>':'<span class="cbadge cbadge-soon">Coming Soon</span>'}
+        </div>
+        <div class="card-hover-reveal">
+          <span class="hover-reveal-text">View Details</span>
+          <span class="hover-reveal-arrow">→</span>
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="card-num">Title ${g.num} of ${total}</div>
+        <div class="card-title">${g.title}</div>
+        <div class="card-sub">${g.descShort}</div>
+        <div class="card-tags">${g.genre.map(t=>`<span class="ctag">${t}</span>`).join('')}</div>
+      </div>`;
+    card.addEventListener('click',()=>openPanel(g.id));
+    grid.appendChild(card);
+  });
+  /* Init matrix canvas in card if present */
+  setTimeout(initMatrixCard,100);
+}
+ 
+/* ─── TABS ─── */
+document.querySelectorAll('.stab').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
+    this.classList.add('active');
+    renderCards(this.dataset.filter);
+  });
+});
+ 
+/* ─── PANEL OPEN/CLOSE ─── */
+function openPanel(gameId){
+  const g=GAMES.find(x=>x.id===gameId);if(!g)return;
+  const panel=document.getElementById('game-panel');
+  panel.innerHTML=buildPanel(g);
+  panel.classList.add('open');
+  document.getElementById('panel-overlay').classList.add('show');
+  document.body.style.overflow='hidden';
+  /* Re-init matrix canvas in panel if it's matrix-field */
+  if(g.id==='matrix-field')setTimeout(initMatrixPanel,100);
+}
+function closePanel(){
+  document.getElementById('game-panel').classList.remove('open');
+  document.getElementById('panel-overlay').classList.remove('show');
+  document.body.style.overflow='';
+}
+ 
+function buildPanel(g){
+  const isAvail=g.status==='available';
+  const ctrlsHTML=g.controls.length?`
+    <div class="panel-divider"></div>
+    <div class="controls-section">
+      <div class="ctrl-section-label">Controls</div>
+      ${g.controls.map(group=>`
+        <div class="ctrl-group">
+          <div class="ctrl-group-name">${group.group}</div>
+          ${group.rows.map(r=>`
+            <div class="ctrl-row">
+              <div class="ctrl-keys">${r.keys.map(k=>{
+                const w=k.length>3?' wide':'';
+                const isMouse=k==='MOUSE';
+                return `<kbd class="${isMouse?'kbd-mouse':w}">${k}</kbd>`;
+              }).join('')}</div>
+              <span class="ctrl-action">${r.action}</span>
+            </div>`).join('')}
+        </div>`).join('')}
+    </div>`:'';
+ 
+  const esrbHTML=g.esrb!=='TBD'?`
+    <div class="panel-divider"></div>
+    <div class="esrb-section">
+      <div class="esrb-label">ESRB Rating</div>
+      <div class="esrb-wrap">
+        <div class="esrb-badge">
+          <div class="esrb-letter">${g.esrb.replace(/\d+\+?/,'')}</div>
+          <div class="esrb-right">
+            <span class="esrb-label-sm">ESRB</span>
+            <span class="esrb-rating">${g.esrb}</span>
+          </div>
+        </div>
+        <div class="esrb-desc-text">
+          <div class="esrb-rating-full">${g.esrbFull}</div>
+          <div class="esrb-content-desc">${g.esrbDesc}</div>
+        </div>
+      </div>
+    </div>`:'';
+ 
+  return`
+    <div class="panel-close">
+      <span class="panel-breadcrumb">Game Library / ${g.title}</span>
+      <button class="panel-close-btn" onclick="closePanel()">✕</button>
+    </div>
+    <div class="panel-cover">${coverArt(g)}</div>
+    <div class="panel-body">
+      <div class="panel-title-row">
+        <div class="panel-genre-bar">
+          ${g.genre.map(t=>`<span class="panel-genre-tag">${t}</span>`).join('')}
+          ${isAvail?`<span class="panel-genre-tag" style="border-color:rgba(0,229,255,.4);color:var(--accent);background:rgba(0,229,255,.08)">Available Now</span>`:`<span class="panel-genre-tag" style="color:var(--text-faint)">Coming Soon</span>`}
+        </div>
+        <div class="panel-title">${g.title}</div>
+        <div class="panel-sub">${g.sub}</div>
+        <div class="panel-dev">${g.dev} · ${g.year}</div>
+      </div>
+      <div class="panel-desc">${g.desc}</div>
+      ${esrbHTML}
+      ${ctrlsHTML}
+      <div class="panel-divider"></div>
+      ${isAvail
+        ?`<button class="panel-play-btn"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>Play Now — Free</button>`
+        :`<div class="panel-coming-btn"><svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>In Development — Coming Soon</div>`}
+    </div>`;
+}
+ 
+/* ─── MATRIX RAIN ─── */
+function runMatrix(canvas){
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.offsetWidth||200,H=canvas.offsetHeight||300;
+  canvas.width=W;canvas.height=H;
+  const chars='∫∑πλσΔ∇√01∂ℝℕ10αβγθφ∈∀∃≡≈';
+  const cols=Math.floor(W/12);
+  const drops=Array(cols).fill(1);
+  return setInterval(()=>{
+    ctx.fillStyle='rgba(0,8,0,.08)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(0,255,65,.7)';ctx.font='10px JetBrains Mono, monospace';
+    drops.forEach((y,i)=>{
+      ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*12,y*12);
+      if(y*12>H&&Math.random()>.96)drops[i]=0;
+      drops[i]++;
+    });
+  },60);
+}
+let matrixInterval=null;
+function initMatrixCard(){
+  const c=document.getElementById('matrix-canvas-card');
+  if(c){if(matrixInterval)clearInterval(matrixInterval);matrixInterval=runMatrix(c);}
+}
+function initMatrixPanel(){
+  const c=document.querySelector('#game-panel canvas');
+  if(c)runMatrix(c);
+}
+ 
+/* ─── TICKER ─── */
+(function(){
+  const items=GAMES.map(g=>`<span>${g.title} — ${g.status==='available'?'Available Now':'Coming Soon'}</span>`).join('');
+  const t=document.getElementById('ticker');
+  t.innerHTML=items+items;
+})();
+ 
+/* ─── INIT ─── */
+renderCards('all');
+ 
+/* ─── HERO CLICK TO PANEL ─── */
+document.querySelector('.store-hero').addEventListener('click',()=>openPanel('ode3d'));
+/* prevent double from button inside */
+document.querySelector('.hero-btn').addEventListener('click',e=>{e.stopPropagation();openPanel('ode3d');});
+ 
+/* ─── KEYBOARD CLOSE ─── */
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();});
+</script>
+</body>
+</html>
