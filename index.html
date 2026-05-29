@@ -518,6 +518,7 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 16px 20px;
       transition: border-color 0.2s, transform 0.2s;
+      cursor: pointer; /* Added pointer cursor for clickable cards */
     }
     .cert-card:hover { border-color: var(--accent3); transform: translateY(-2px); }
     .cert-issuer { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent3); margin-bottom: 6px; }
@@ -797,6 +798,64 @@
     .draw-exit{background:var(--surface);border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:4px;cursor:pointer;transition:border-color .2s,color .2s}
     .draw-exit:hover{border-color:var(--white);color:var(--white)}
  
+    /* ── ENVELOPE MODAL STYLES (Wii-Style Surprise) ── */
+    .env-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden; transition: opacity 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+    .env-modal-overlay.active { opacity: 1; visibility: visible; }
+
+    .env-wrapper {
+      position: relative; width: 300px; height: 200px;
+      perspective: 1000px;
+      transition: transform 0.5s ease;
+    }
+    .env-modal-overlay.open .env-wrapper { transform: translateY(150px); }
+
+    .env-back {
+      position: absolute; inset: 0; background: #1e2d3d; border-radius: 8px;
+      border: 1px solid var(--accent); box-shadow: 0 0 20px rgba(0,229,255,0.2);
+    }
+    .env-front {
+      position: absolute; inset: 0; z-index: 3;
+      background: linear-gradient(135deg, #151d26, #111820);
+      border-radius: 8px; border: 1px solid var(--accent);
+      clip-path: polygon(0 0, 50% 50%, 100% 0, 100% 100%, 0 100%);
+    }
+    .env-flap {
+      position: absolute; top: 0; left: 0; right: 0; height: 120px; z-index: 4;
+      background: #151d26; border: 1px solid var(--accent); border-radius: 8px 8px 0 0;
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+      transform-origin: top;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .env-modal-overlay.open .env-flap {
+      transform: rotateX(180deg);
+      z-index: 1;
+    }
+
+    .env-paper {
+      position: absolute; left: 10px; right: 10px; bottom: 10px; top: 10px;
+      z-index: 2; 
+      transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .env-paper img {
+      width: 100%; border-radius: 4px; box-shadow: 0 0 0 rgba(0,0,0,0);
+      transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .env-modal-overlay.open .env-paper {
+      transform: translateY(-200px);
+    }
+    .env-modal-overlay.open .env-paper img {
+      transform: scale(2.5);
+      box-shadow: 0 20px 50px rgba(0,229,255,0.4);
+      border: 2px solid var(--accent);
+    }
+
     /* ── MOBILE ── */
     @media (max-width: 900px) {
       body { cursor: auto; }
@@ -818,6 +877,9 @@
       #skills, #experience, #projects, #contact { padding: 80px 0; }
       .proj-portal { min-height: auto; padding: 28px 24px; }
       .bsp-box { padding: 40px 28px; }
+      .env-wrapper { width: 240px; height: 160px; }
+      .env-modal-overlay.open .env-wrapper { transform: translateY(100px); }
+      .env-modal-overlay.open .env-paper img { transform: scale(1.8); }
     }
     @media (max-width: 480px) {
       .certs-grid { grid-template-columns: 1fr; }
@@ -1205,19 +1267,20 @@
       <h2 class="section-title" style="font-size:clamp(20px,2vw,26px);">Certifications</h2>
       <div class="section-line"></div>
     </div>
+    
     <div class="certs-grid">
-      <div class="cert-card reveal"><div class="cert-issuer">uCertify</div><div class="cert-name">Oracle Database SQL</div><div class="cert-date">Oct 2025 · ID: TYCW3KZB</div></div>
-      <div class="cert-card reveal"><div class="cert-issuer">The Global Career Accelerator</div><div class="cert-name">Data Visualization Certification</div><div class="cert-date">Aug 2025 · Tableau · Data Viz</div></div>
-      <div class="cert-card reveal"><div class="cert-issuer">The Global Career Accelerator</div><div class="cert-name">AI Professional Skills Certification</div><div class="cert-date">Aug 2025 · Prompt Engineering · AI Literacy</div></div>
-      <div class="cert-card reveal"><div class="cert-issuer">The Global Career Accelerator</div><div class="cert-name">Data Analysis Certification</div><div class="cert-date">Jul 2025 · Excel · Analytics</div></div>
-      <div class="cert-card reveal"><div class="cert-issuer">CSSC</div><div class="cert-name">Six Sigma Yellow Belt</div><div class="cert-date">Jun 2025 · ID: De28EjvvZn</div></div>
-      <div class="cert-card reveal"><div class="cert-issuer">CSSC</div><div class="cert-name">Six Sigma White Belt</div><div class="cert-date">Jun 2025 · ID: IDv50eSiTm</div></div>
-      <div class="cert-card reveal"><div class="cert-issuer">Wolfram Research</div><div class="cert-name">Statistics Foundations Professional Certificate</div><div class="cert-date">May 2025 · Wolfram Language</div></div>
-      <div class="cert-card reveal"><div class="cert-issuer">Microsoft &amp; LinkedIn</div><div class="cert-name">Career Essentials in Generative AI</div><div class="cert-date">May 2025 · Copilot · Responsible AI</div></div>
-      <div class="cert-card reveal"><div class="cert-issuer">Anaconda, Inc.</div><div class="cert-name">Python for Data Science Professional Certificate</div><div class="cert-date">May 2025 · Python · Data Analysis</div></div>
-      <div class="cert-card reveal"><div class="cert-issuer">OpenEDG Python Institute</div><div class="cert-name">Programming with Python Professional Certificate</div><div class="cert-date">May 2025 · Python · OOP</div></div>
-      <div class="cert-card reveal"><div class="cert-issuer">Microsoft &amp; LinkedIn</div><div class="cert-name">Career Essentials in Data Analysis</div><div class="cert-date">May 2025 · Analytics · Visualization</div></div>
-      <div class="cert-card reveal"><div class="cert-issuer">The Global Career Accelerator</div><div class="cert-name">Intercultural Skills Certification</div><div class="cert-date">Aug 2025 · Collaboration · Communication</div></div>
+      <div class="cert-card reveal" style="cursor: pointer;" onclick="openCertEnvelope('img/cert1.jpg')"><div class="cert-issuer">uCertify</div><div class="cert-name">Oracle Database SQL</div><div class="cert-date">Oct 2025 · ID: TYCW3KZB</div></div>
+      <div class="cert-card reveal" style="cursor: pointer;" onclick="openCertEnvelope('img/cert2.jpg')"><div class="cert-issuer">The Global Career Accelerator</div><div class="cert-name">Data Visualization Certification</div><div class="cert-date">Aug 2025 · Tableau · Data Viz</div></div>
+      <div class="cert-card reveal" style="cursor: pointer;" onclick="openCertEnvelope('img/cert3.jpg')"><div class="cert-issuer">The Global Career Accelerator</div><div class="cert-name">AI Professional Skills Certification</div><div class="cert-date">Aug 2025 · Prompt Engineering · AI Literacy</div></div>
+      <div class="cert-card reveal" style="cursor: pointer;" onclick="openCertEnvelope('img/cert4.jpg')"><div class="cert-issuer">The Global Career Accelerator</div><div class="cert-name">Data Analysis Certification</div><div class="cert-date">Jul 2025 · Excel · Analytics</div></div>
+      <div class="cert-card reveal" style="cursor: pointer;" onclick="openCertEnvelope('img/cert5.jpg')"><div class="cert-issuer">CSSC</div><div class="cert-name">Six Sigma Yellow Belt</div><div class="cert-date">Jun 2025 · ID: De28EjvvZn</div></div>
+      <div class="cert-card reveal" style="cursor: pointer;" onclick="openCertEnvelope('img/cert6.jpg')"><div class="cert-issuer">CSSC</div><div class="cert-name">Six Sigma White Belt</div><div class="cert-date">Jun 2025 · ID: IDv50eSiTm</div></div>
+      <div class="cert-card reveal" style="cursor: pointer;" onclick="openCertEnvelope('img/cert7.jpg')"><div class="cert-issuer">Wolfram Research</div><div class="cert-name">Statistics Foundations Professional Certificate</div><div class="cert-date">May 2025 · Wolfram Language</div></div>
+      <div class="cert-card reveal" style="cursor: pointer;" onclick="openCertEnvelope('img/cert8.jpg')"><div class="cert-issuer">Microsoft &amp; LinkedIn</div><div class="cert-name">Career Essentials in Generative AI</div><div class="cert-date">May 2025 · Copilot · Responsible AI</div></div>
+      <div class="cert-card reveal" style="cursor: pointer;" onclick="openCertEnvelope('img/cert9.jpg')"><div class="cert-issuer">Anaconda, Inc.</div><div class="cert-name">Python for Data Science Professional Certificate</div><div class="cert-date">May 2025 · Python · Data Analysis</div></div>
+      <div class="cert-card reveal" style="cursor: pointer;" onclick="openCertEnvelope('img/cert10.jpg')"><div class="cert-issuer">OpenEDG Python Institute</div><div class="cert-name">Programming with Python Professional Certificate</div><div class="cert-date">May 2025 · Python · OOP</div></div>
+      <div class="cert-card reveal" style="cursor: pointer;" onclick="openCertEnvelope('img/cert11.jpg')"><div class="cert-issuer">Microsoft &amp; LinkedIn</div><div class="cert-name">Career Essentials in Data Analysis</div><div class="cert-date">May 2025 · Analytics · Visualization</div></div>
+      <div class="cert-card reveal" style="cursor: pointer;" onclick="openCertEnvelope('img/cert12.jpg')"><div class="cert-issuer">The Global Career Accelerator</div><div class="cert-name">Intercultural Skills Certification</div><div class="cert-date">Aug 2025 · Collaboration · Communication</div></div>
     </div>
   </div>
 </section>
@@ -1510,23 +1573,23 @@
         </div>
       </div>
       <div class="reveal-r">
-        <div class="contact-form">
+        <form action="https://formspree.io/f/YOUR_FORM_ID_HERE" method="POST" class="contact-form">
           <div class="form-group">
             <label class="form-label">Name</label>
-            <input type="text" class="form-control" placeholder="Daisy DeShrimpo" />
+            <input type="text" name="name" class="form-control" placeholder="Daisy DeShrimpo" required />
           </div>
           <div class="form-group">
             <label class="form-label">Email</label>
-            <input type="email" class="form-control" placeholder="DeShrimpo@company.com" />
+            <input type="email" name="email" class="form-control" placeholder="DeShrimpo@company.com" required />
           </div>
           <div class="form-group">
             <label class="form-label">Message</label>
-            <textarea class="form-control" rows="5" placeholder="Tell me about your opportunity or project..."></textarea>
+            <textarea name="message" class="form-control" rows="5" placeholder="Tell me about your opportunity or project..." required></textarea>
           </div>
-          <button class="btn btn-primary" style="align-self:flex-start;" onclick="handleFormSubmit(this)">
+          <button type="submit" class="btn btn-primary" style="align-self:flex-start;">
             Send Message →
           </button>
-        </div>
+        </form>
       </div>
     </div>
   </div>
@@ -1585,6 +1648,17 @@
     </div>
   </div>
 </footer>
+
+<div id="cert-envelope-modal" class="env-modal-overlay" onclick="closeCertEnvelope()">
+  <div class="env-wrapper" onclick="event.stopPropagation()">
+    <div class="env-back"></div>
+    <div class="env-paper">
+      <img id="cert-env-img" src="" alt="Certificate" />
+    </div>
+    <div class="env-front"></div>
+    <div class="env-flap"></div>
+  </div>
+</div>
  
 <script>
 /* ── LOADER ── */
@@ -1665,13 +1739,6 @@ const barObserver = new IntersectionObserver(entries => {
   });
 }, { threshold: 0.3 });
 document.querySelectorAll('.skill-group').forEach(el => barObserver.observe(el));
- 
-function handleFormSubmit(btn) {
-  btn.textContent = 'Sent ✓';
-  btn.style.background = 'var(--accent2)';
-  btn.style.color = 'var(--bg)';
-  setTimeout(() => { btn.textContent = 'Send Message →'; btn.style.background = ''; btn.style.color = ''; }, 3000);
-}
  
 // ── BACKGROUND CANVAS ──
 const canvas = document.getElementById('bg-canvas');
@@ -1804,6 +1871,32 @@ function exitDrawMode(){
   document.getElementById('pen-btn').classList.remove('unlocked');
 }
 
+/* ── WII-STYLE ENVELOPE LOGIC ── */
+function openCertEnvelope(imgSrc) {
+  const modal = document.getElementById('cert-envelope-modal');
+  const img = document.getElementById('cert-env-img');
+  
+  // Set the image source
+  img.src = imgSrc || 'https://via.placeholder.com/600x400/111820/00e5ff?text=Certificate+Image'; 
+  
+  // Show the overlay
+  modal.classList.add('active');
+  
+  // Wait a tiny bit, then trigger the open animation
+  setTimeout(() => {
+    modal.classList.add('open');
+  }, 300);
+}
+
+function closeCertEnvelope() {
+  const modal = document.getElementById('cert-envelope-modal');
+  modal.classList.remove('open');
+  
+  // Wait for the paper to slide back in and flap to close before hiding overlay
+  setTimeout(() => {
+    modal.classList.remove('active');
+  }, 500); 
+}
 </script>
 
 </body>
