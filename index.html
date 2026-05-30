@@ -517,7 +517,7 @@
     .cert-card {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 16px 20px;
-      transition: none;
+      transition: border-color 0.1s, transform 0.1s;
       cursor: pointer; /* Added pointer cursor for clickable cards */
     }
     .cert-card:hover { border-color: var(--accent3); transform: translateY(-2px); }
@@ -800,12 +800,21 @@
  
     /* ── ENVELOPE MODAL STYLES (Wii-Style Surprise) ── */
     .env-modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100000;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9990;
       display: flex; align-items: center; justify-content: center;
       opacity: 0; visibility: hidden; transition: opacity 0.3s ease;
       backdrop-filter: blur(5px);
     }
     .env-modal-overlay.active { opacity: 1; visibility: visible; }
+
+    .env-close-btn {
+      position: absolute; top: 40px; right: 48px;
+      display: flex; align-items: center; gap: 8px;
+      color: var(--text-dim); font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer; transition: color 0.2s, transform 0.2s; z-index: 20;
+    }
+    .env-close-btn:hover { color: var(--accent); transform: scale(1.05); }
+    .env-close-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
     .env-wrapper {
       position: relative; width: 300px; height: 200px;
@@ -839,7 +848,7 @@
     .env-paper {
       position: absolute; left: 10px; right: 10px; bottom: 10px; top: 10px;
       z-index: 2; 
-      transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+      transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index 0s linear 0.8s;
       display: flex; align-items: flex-end; justify-content: center;
     }
     .env-paper img {
@@ -850,6 +859,7 @@
     .env-modal-overlay.open .env-paper {
       transform: translateY(-200px);
       z-index: 10;
+      transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), z-index 0s linear 0s;
     }
     .env-modal-overlay.open .env-paper img {
       transform: scale(2.5);
@@ -1651,6 +1661,11 @@
 </footer>
 
 <div id="cert-envelope-modal" class="env-modal-overlay" onclick="closeCertEnvelope()">
+  <div class="env-close-btn">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    Close
+  </div>
+  
   <div class="env-wrapper" onclick="event.stopPropagation()">
     <div class="env-back"></div>
     <div class="env-paper">
@@ -1896,7 +1911,7 @@ function closeCertEnvelope() {
   // Wait for the paper to slide back in and flap to close before hiding overlay
   setTimeout(() => {
     modal.classList.remove('active');
-  }, 500); 
+  }, 850); 
 }
 </script>
 
