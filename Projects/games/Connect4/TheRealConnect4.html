@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Connect 4: Corn Edition</title>
+
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    background: url("cornBa.jpg") no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Falling corn */
+.cornflake {
+    position: fixed;
+    top: -10px;
+    font-size: 18px;
+    z-index: 9999;
+    pointer-events: none;
+    animation: fall linear infinite;
+}
+
+@keyframes fall {
+    from { transform: translateY(0) rotate(0deg); }
+    to { transform: translateY(100vh) rotate(360deg); }
+}
+
+/* Screens */
+#startScreen, #gameScreen, #winScreen {
+    position: absolute;
+    text-align: center;
+    color: #fff8dc;
+    text-shadow: 0 0 6px black;
+    z-index: 10;
+}
+
+/* Buttons */
+.button {
+    background: linear-gradient(#ffd966, #e6b800);
+    padding: 15px 40px;
+    border-radius: 14px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-size: 22px;
+    font-weight: bold;
+    transition: 0.25s;
+    color: #3e2f1c;
+    border: 3px solid #3e2f1c;
+}
+.button:hover { transform: scale(1.1); }
+
+/* Board */
+#board {
+    display: grid;
+    grid-template-columns: repeat(7, 80px);
+    grid-template-rows: repeat(6, 80px);
+    gap: 10px;
+    padding: 20px;
+    background: rgba(60, 40, 20, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 0 25px #000;
+    margin-top: 20px;
+}
+
+.cell {
+    width: 80px;
+    height: 80px;
+    background: #2b1a0e;
+    border-radius: 50%;
+    box-shadow: inset 0 0 14px #000;
+    position: relative;
+}
+
+/* Base disc */
+.disc {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    position: absolute;
+    top: 0; left: 0;
+    border: 4px solid #1a1a1a;
+    box-shadow:
+        inset 0 4px 8px rgba(255,255,255,0.4),
+        inset 0 -6px 10px rgba(0,0,0,0.6),
+        0 6px 10px rgba(0,0,0,0.6);
+}
+
+/* 🌽 Corn Player */
+.corn {
+    background:
+        repeating-linear-gradient(
+            90deg,
+            #ffd966,
+            #ffd966 6px,
+            #e6b800 6px,
+            #e6b800 12px
+        );
+}
+
+/* 🐦 Crow AI */
+.crow {
+    background:
+        radial-gradient(circle at 30% 30%, #555, #111 60%),
+        repeating-linear-gradient(
+            45deg,
+            rgba(255,255,255,0.05),
+            rgba(255,255,255,0.05) 4px,
+            rgba(0,0,0,0.2) 4px,
+            rgba(0,0,0,0.2) 8px
+        );
+}
+
+/* Score */
+#scoreboard {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="cornContainer"></div>
+
+<div id="startScreen">
+    <h1>🌽 Connect 4: Corn Edition 🐦</h1>
+    <div class="button" onclick="startSeries()">Start Best-of-5 Corn-Off</div>
+</div>
+
+<div id="gameScreen" style="display:none;">
+    <div id="scoreboard">Farmer: 0 - Crow: 0</div>
+    <div id="turnText">Your Turn (Corn)</div>
+    <div id="board"></div>
+</div>
+
+<div id="winScreen" style="display:none;">
+    <h1 id="winMessage"></h1>
+</div>
+
+<script>
+const ROWS = 6, COLS = 7;
+let board = [], gameOver = false;
+let playerWins = 0, aiWins = 0;
+let acceptingInput = true;
+
+const boardDiv = document.getElementById("board");
+const scoreboard = document.getElementById("scoreboard");
+
+/* 🎵 Sounds */
+const crowWinSound = new Audio("CROWWINS2.mp3");
+const cornWinSound = new Audio("You win Corn.mp3");
+const chipPlaceSound = new Audio("ChipPlace.mp3");
+const bgm = new Audio("Corn on the Cob - 7_13_25, 1 (Remix).mp3");
+bgm.loop = true;
+
+/* Play a sound safely */
+function playSound(sound) {
+    sound.currentTime = 0;
+    sound.play().catch(() => {});
+}
+
+/* Falling corn */
+function createCornflakes() {
+    const container = document.getElementById("cornContainer");
+    for (let i = 0; i < 50; i++) {
+        let flake = document.createElement("div");
+        flake.className = "cornflake";
+        flake.style.left = Math.random() * 100 + "vw";
+        flake.style.animationDuration = (6 + Math.random() * 8) + "s";
+        flake.style.fontSize = (12 + Math.random() * 14) + "px";
+        flake.textContent = "🌽";
+        container.appendChild(flake);
+    }
+}
+createCornflakes();
+
+function startSeries() {
+    playerWins = 0;
+    aiWins = 0;
+    bgm.play().catch(() => {});
+    startGame();
+}
+
+function startGame() {
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("winScreen").style.display = "none";
+    document.getElementById("gameScreen").style.display = "block";
+    resetBoard();
+    updateScoreboard();
+}
+
+function resetBoard() {
+    gameOver = false;
+    acceptingInput = true;
+    board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    boardDiv.innerHTML = "";
+    buildBoard();
+}
+
+function updateScoreboard() {
+    scoreboard.textContent = `Farmer: ${playerWins} - Crow: ${aiWins}`;
+}
+
+function buildBoard() {
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            let cell = document.createElement("div");
+            cell.className = "cell";
+            cell.onclick = () => playerMove(c);
+            boardDiv.appendChild(cell);
+        }
+    }
+}
+
+function checkDraw() {
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            if (!board[r][c]) return false; // still empty spots
+        }
+    }
+    return true; // board is full
+}
+
+
+function getOpenRow(col) {
+    for (let r = ROWS - 1; r >= 0; r--) if (!board[r][col]) return r;
+    return -1;
+}
+
+function playerMove(col) {
+    if (gameOver || !acceptingInput) return;
+    let row = getOpenRow(col);
+    if (row === -1) return;
+
+    acceptingInput = false;
+    placeDisc(row, col, "corn");
+    board[row][col] = "corn";
+    playSound(chipPlaceSound);
+
+    if (checkWin("corn")) {
+        playerWins++;
+        updateScoreboard();
+        playSound(cornWinSound);
+        endRound("🌽 You Protected the Harvest!");
+        return;
+    }
+
+    if (checkDraw()) { // new draw check
+        endRound("🤝 It's a Draw!");
+        return;
+    }
+
+    setTimeout(aiMove, 400);
+}
+
+function aiMove() {
+    let col = getSmartAIMove();
+    let row = getOpenRow(col);
+    placeDisc(row, col, "crow");
+    board[row][col] = "crow";
+    playSound(chipPlaceSound);
+
+    if (checkWin("crow")) {
+        aiWins++;
+        updateScoreboard();
+        playSound(crowWinSound);
+        endRound("🐦 The Crow Raided Your Field!");
+        return;
+    }
+
+    if (checkDraw()) { // new draw check
+        endRound("🤝 It's a Draw!");
+        return;
+    }
+
+    acceptingInput = true;
+}
+
+function placeDisc(row, col, type) {
+    let index = row * COLS + col;
+    let cell = boardDiv.children[index];
+    let disc = document.createElement("div");
+    disc.className = "disc " + type;
+    cell.appendChild(disc);
+}
+
+function getSmartAIMove() {
+    for (let c = 0; c < COLS; c++) {
+        let r = getOpenRow(c);
+        if (r !== -1) {
+            board[r][c] = "crow";
+            if (checkWin("crow")) { board[r][c] = null; return c; }
+            board[r][c] = null;
+        }
+    }
+    for (let c = 0; c < COLS; c++) {
+        let r = getOpenRow(c);
+        if (r !== -1) {
+            board[r][c] = "corn";
+            if (checkWin("corn")) { board[r][c] = null; return c; }
+            board[r][c] = null;
+        }
+    }
+    const order = [3,2,4,1,5,0,6];
+    for (let c of order) if (getOpenRow(c) !== -1) return c;
+}
+
+function checkWin(color) {
+    for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS - 3; c++)
+            if (board[r][c]===color && board[r][c+1]===color &&
+                board[r][c+2]===color && board[r][c+3]===color) return true;
+
+    for (let r = 0; r < ROWS - 3; r++)
+        for (let c = 0; c < COLS; c++)
+            if (board[r][c]===color && board[r+1][c]===color &&
+                board[r+2][c]===color && board[r+3][c]===color) return true;
+
+    for (let r = 0; r < ROWS - 3; r++)
+        for (let c = 0; c < COLS - 3; c++)
+            if (board[r][c]===color && board[r+1][c+1]===color &&
+                board[r+2][c+2]===color && board[r+3][c+3]===color) return true;
+
+    for (let r = 3; r < ROWS; r++)
+        for (let c = 0; c < COLS - 3; c++)
+            if (board[r][c]===color && board[r-1][c+1]===color &&
+                board[r-2][c+2]===color && board[r-3][c+3]===color) return true;
+
+    return false;
+}
+
+function endRound(msg) {
+    gameOver = true;
+    document.getElementById("gameScreen").style.display = "none";
+    document.getElementById("winMessage").textContent = msg;
+    document.getElementById("winScreen").style.display = "block";
+
+    setTimeout(() => {
+        if (playerWins === 3 || aiWins === 3) {
+            alert(playerWins === 3 ? "🌽 You Won the Corn-Off! Code: RCCE" : "🐦 The Crow Wins!");
+            document.getElementById("winScreen").style.display = "none";
+            document.getElementById("startScreen").style.display = "block";
+            playerWins = 0;
+            aiWins = 0;
+        } else startGame();
+    }, 1500);
+}
+</script>
+
+</body>
+</html>

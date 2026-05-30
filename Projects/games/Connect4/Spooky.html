@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The West Highland Terror Game - Flashlight System</title>
+<style>
+  body { margin: 0; overflow: hidden; background-color: #000; }
+  canvas { display: block; }
+
+  #menu {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: black; color: red;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center; z-index: 100;
+  }
+  #menu h1 { font-size: 48px; margin-bottom: 20px; }
+  #menu button { font-size: 24px; padding: 15px 30px; cursor: pointer; }
+
+  #message {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: red;
+    font-family: Arial;
+    font-size: 24px;
+    font-weight: bold;
+    z-index: 10;
+  }
+
+  #flashlightBars {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: red;
+    font-size: 24px;
+    font-family: Arial;
+    font-weight: bold;
+    z-index: 10;
+  }
+
+  #mapCanvas {
+  display: none !important;
+}
+
+  #jumpscare {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: url('https://raw.githubusercontent.com/antha21/Project/main/Screenshot_20250615_162031_Snapchat.jpg') center center no-repeat;
+    background-size: cover;
+    display: none;
+    z-index: 20;
+  }
+</style>
+</head>
+<body>
+
+<!-- TITLE MENU -->
+<div id="menu" style="
+  display:flex; 
+  position:fixed; 
+  top:0; left:0; width:100%; height:100%; 
+  background: radial-gradient(circle at center, #000000 0%, #111111 100%);
+  color:#ff0000; 
+  z-index:100; 
+  flex-direction:column; 
+  justify-content:center; 
+  align-items:center;
+  font-family: 'Creepster', cursive, Arial;
+">
+  <canvas id="rainCanvasMenu" class="rain"></canvas>
+  <h1 id="gameTitle" style="
+    font-size:64px; 
+    text-shadow: 0 0 3px #880000, 0 0 6px #aa1111, 0 0 30px #ff5555; 
+    margin-bottom:50px;
+    animation: flicker 1.5s infinite;
+  ">The West Highland Terror</h1>
+  <button class="menuBtn" id="startBtn">Start Game</button>
+  <button class="menuBtn" id="howToBtn">How To Play</button>
+</div>
+
+<!-- HOW TO PLAY -->
+<div id="howTo" style="
+  display:none; 
+  position:fixed; 
+  top:0; left:0; width:100%; height:100%; 
+  background: radial-gradient(circle at center, #000000 0%, #111111 100%);
+  color:#ff5555; 
+  z-index:110; 
+  flex-direction:column; 
+  justify-content:center; 
+  align-items:center;
+  font-family: 'Creepster', cursive, Arial;
+">
+  <canvas id="rainCanvasHowTo" class="rain"></canvas>
+  <h1 style="font-size:48px; text-shadow: 0 0 10px #ff5555;">How To Play</h1>
+  <p style="max-width:600px; text-align:center; font-size:22px; line-height:1.5;">
+    Wake up! you are trapped in a spooky house with a white, fluffy Chump on the loose. You need to escape and survive!</p>
+  <p style="max-width:600px; text-align:center; font-size:22px; line-height:1.5;">
+    💡 Your flashlight has limited energy so find batteries.<br>
+    🗝 Collect all 3 keys to unlock the exit.<br>
+    🚪 Approach the door when you have all keys to escape.<br>
+    🔦 Use Arrow Keys to move and turn.
+  </p>
+  <button class="menuBtn" id="backBtn" style="margin-top:30px;">Back to Menu</button>
+</div>
+
+
+<!-- STYLES -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Creepster&display=swap');
+
+.menuBtn {
+  font-size: 28px;
+  color: #ff4444;
+  background: transparent;
+  border: 2px solid #ff4444;
+  padding: 15px 40px;
+  margin: 10px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px #ff0000, 0 0 20px #ff4444;
+}
+
+.menuBtn:hover {
+  background-color: #ff0000;
+  color: black;
+  box-shadow: 0 0 20px #ff6666, 0 0 40px #ff9999;
+  transform: scale(1.05);
+}
+
+@keyframes flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 22%, 24%, 55% { opacity: 0.6; }
+}
+
+
+canvas.rain {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0; /* behind text/buttons */
+  pointer-events: none;
+}
+
+
+</style>
+
+<canvas id="rainCanvas" style="
+    position: fixed; 
+    top:0; left:0; 
+    width:100%; 
+    height:100%; 
+    z-index: 90; 
+    pointer-events:none;">
+</canvas>
+
+
+<div id="message"></div>
+<div id="flashlightBars">🔋 🔋</div>
+<canvas id="mapCanvas" width="200" height="200"></canvas>
+<div id="jumpscare"></div>
+
+<!-- Audio -->
+<audio id="ambientSound" src="C:/Users/anthp/OneDrive/Desktop/Connect4/Free Horror Ambiance  Ominous Background Music.mp3" loop></audio>
+const ambientSound = document.getElementById("ambientSound");
+ambientSound.volume = 0.01;
+
+<audio id="creatureGrowl" src="https://www.soundjay.com/horror/sounds/horror-growl-1.mp3"></audio>
+<audio id="batteryPickup" src="C:/Users/anthp/OneDrive/Desktop/Connect4/Item Pick up Counter Strike Source  Sound Effect for editing.mp3"></audio>
+<audio id="flashlightDies" src="C:/Users/anthp/OneDrive/Desktop/Connect4/FlashlightDies.mp3"></audio>
+<audio id="flashlightOn" src="C:/Users/anthp/OneDrive/Desktop/Connect4/FlashlightOn.mp3"></audio>
+
+<audio id="footstepSound" src="C:/Users/anthp/OneDrive/Desktop/Connect4/WalkingFoots3.mp3" loop></audio>
+<audio id="keyPickupSound" src="C:/Users/anthp/OneDrive/Desktop/Connect4/KeyPickupsS.mp3"></audio>
+
+<audio id="jumpscareSound" src="C:/Users/anthp/OneDrive/Desktop/Connect4/JumpscareChump.mp3"></audio>
+<audio id="creatureSound" src="C:/Users/anthp/OneDrive/Desktop/Connect4/SpookyChump2.mp3" loop></audio>
+const creatureSound = document.getElementById("creatureSound");
+creatureSound.volume = 0.9;
+
+<audio id="doorOpenSound" src="C:/Users/anthp/OneDrive/Desktop/Connect4/OpeningDoor.mp3"></audio>
+<audio id="doorLockedSound" src="C:/Users/anthp/OneDrive/Desktop/Connect4/LockedDoor.mp3"></audio>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
+<script>
+// ----- Scene -----
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x000000, 0, 50);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// ----- Lights -----
+const ambientLight = new THREE.AmbientLight(0x050505);
+scene.add(ambientLight);
+
+const flashlight = new THREE.SpotLight(0xffffff, 2, 20, Math.PI/6, 0.5, 1);
+flashlight.position.set(0,1.5,0);
+flashlight.target.position.set(0,1,-1);
+camera.add(flashlight);
+camera.add(flashlight.target);
+scene.add(camera);
+let flickerTime = 0;
+
+// ------Walking---------------
+const footstepSound = document.getElementById("footstepSound");
+
+let isMoving = false;
+
+function updateFootsteps() {
+  const moving = keys.ArrowUp || keys.ArrowDown;
+  
+  if (moving && !isMoving) {
+    // Player just started moving
+    footstepSound.currentTime = 0;
+    footstepSound.play().catch(() => {});
+    isMoving = true;
+  } else if (!moving && isMoving) {
+    // Player stopped
+    footstepSound.pause();
+    footstepSound.currentTime = 0;
+    isMoving = false;
+  }
+}
+
+// Call this when game ends or jumpscare triggers
+function stopFootsteps() {
+  footstepSound.pause();
+  footstepSound.currentTime = 0;
+  isMoving = false;
+}
+
+
+// ----- Maze & Textures -----
+const cellSize = 2;
+const maze = [
+  "11111111111111111111111111",
+  "10000000000000000000000001",
+  "10111101111111111110010101",
+  "1000000111D111K00010000001",
+  "10101101000001110010000001",
+  "10101101000001000010010101",
+  "10101101000001110010000001",
+  "101000K1000001010010000001",
+  "10111111000001010010111101",
+  "10000000000000000010000001",
+  "10111111000001111110111101",
+  "10000000000000000000100001",
+  "10111111000001011110101111",
+  "1000000100P0010000001000K1",
+  "11111111111111111111111111"
+];
+
+// Wall and Floor
+const wallTexture = new THREE.TextureLoader().load(
+  'https://raw.githubusercontent.com/antha21/Project/main/Walls.jpg',
+  t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.encoding = THREE.sRGBEncoding; }
+);
+const wallMaterial = new THREE.MeshStandardMaterial({ map: wallTexture, side: THREE.DoubleSide });
+
+const floorTexture = new THREE.TextureLoader().load(
+  'https://raw.githubusercontent.com/antha21/Project/main/Tiles.jpg',
+  t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(5,5); t.encoding = THREE.sRGBEncoding; }
+);
+const floorMaterial = new THREE.MeshStandardMaterial({ map: floorTexture });
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(100,100), floorMaterial);
+floor.rotation.x=-Math.PI/2;
+scene.add(floor);
+
+const keyTexture = new THREE.TextureLoader().load(
+  'https://raw.githubusercontent.com/antha21/Project/main/Westie%20Key.jpeg'
+);
+
+const keyMaterial = new THREE.MeshStandardMaterial({
+  map: keyTexture,
+  transparent: true,
+  side: THREE.DoubleSide,
+  emissive: new THREE.Color(0xffcc55),
+  emissiveIntensity: 0.3 // lower so it doesn’t wash out
+});
+keyMaterial.depthWrite = false;
+
+let keyMeshes = [], doorMesh;
+for(let i=0;i<maze.length;i++){
+  for(let j=0;j<maze[i].length;j++){
+    if(maze[i][j]==='1'){
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize,2,cellSize), wallMaterial);
+      wall.position.set(j*cellSize,1,i*cellSize);
+      scene.add(wall);
+    } else if(maze[i][j]==='K'){
+      const key = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.8, 0.8),
+  keyMaterial
+);
+key.position.set(j * cellSize, 0.6, i * cellSize);
+key.rotation.y = Math.PI / 4;
+scene.add(key);
+keyMeshes.push(key);
+
+// 🔥 Glow light
+const glowLight = new THREE.PointLight(0xffcc55, 0.25, 2); // weaker, smaller radius
+glowLight.position.set(
+  key.position.x,
+  key.position.y + 0.2,
+  key.position.z
+);
+scene.add(glowLight);
+
+
+// Attach light to key so it moves together
+key.userData.glowLight = glowLight;
+
+
+    } else if(maze[i][j]==='D'){
+      doorMesh = new THREE.Mesh(new THREE.BoxGeometry(1.5,2,0.5), new THREE.MeshStandardMaterial({color:0x00ff00}));
+      doorMesh.position.set(j*cellSize,1,i*cellSize);
+      scene.add(doorMesh);
+    }
+  }
+}
+
+const keyPickupSound = document.getElementById("keyPickupSound");
+
+const jumpscareSound = document.getElementById("jumpscareSound");
+const creatureSound = document.getElementById("creatureSound");
+const doorOpenSound = document.getElementById("doorOpenSound");
+const doorLockedSound = document.getElementById("doorLockedSound");
+
+
+function initRain(canvas) {
+    const ctx = canvas.getContext("2d");
+
+    let rainDrops = [];
+    const numDrops = 250;
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // create rain drops
+        rainDrops = [];
+        for(let i=0;i<numDrops;i++){
+            rainDrops.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                length: 10 + Math.random() * 20,
+                speed: 2 + Math.random() * 4,
+                opacity: 0.1 + Math.random() * 0.3
+            });
+        }
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function animateR() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.strokeStyle = 'rgba(200,200,255,0.2)';
+        ctx.lineWidth = 1;
+        ctx.lineCap = 'round';
+
+        for(let drop of rainDrops){
+            ctx.beginPath();
+            ctx.moveTo(drop.x, drop.y);
+            ctx.lineTo(drop.x, drop.y + drop.length);
+            ctx.stroke();
+
+            drop.y += drop.speed;
+            if(drop.y > canvas.height){
+                drop.y = -drop.length;
+                drop.x = Math.random() * canvas.width;
+            }
+        }
+        requestAnimationFrame(animateR);
+    }
+
+    animateR();
+}
+
+// Initialize rain only for menu and How To
+initRain(document.getElementById("rainCanvasMenu"));
+initRain(document.getElementById("rainCanvasHowTo"));
+
+
+
+// ----- Player -----
+let gameStarted = false, gameOver=false;
+let keysCollected = 0;
+const totalKeys = 3;
+let playerPosition={x:10,z:11};
+const menu = document.getElementById("menu");
+const howTo = document.getElementById("howTo");
+const startBtn = document.getElementById("startBtn");
+const howToBtn = document.getElementById("howToBtn");
+const backBtn = document.getElementById("backBtn");
+
+startBtn.addEventListener("click", () => {
+  menu.style.display = "none";
+  startGame(); // your existing game start function
+});
+
+howToBtn.addEventListener("click", () => {
+  menu.style.display = "none";
+  howTo.style.display = "flex";
+});
+
+backBtn.addEventListener("click", () => {
+  howTo.style.display = "none";
+  menu.style.display = "flex";
+});
+
+function startGame() {
+  menu.style.display = "none";
+  document.getElementById("jumpscare").style.display = "none";
+  document.getElementById("message").innerText = "";
+
+  ambientSound.currentTime = 0;
+  ambientSound.play().catch(() => {});  
+
+  resetGame();
+  gameStarted = true;
+}
+
+function resetGame(){
+  gameOver = false; 
+  camera.position.set(10*cellSize, 1.5, 11*cellSize);
+  camera.rotation.set(0, 0, 0);
+  creature.position.set(1*cellSize, 0, 1*cellSize);
+  flashlightEnergy = maxFlashlightEnergy;
+  flashlightDead = false;
+  spawnCreature();
+
+
+  // Respawn keys
+  keyMeshes.forEach(k => { if(k) scene.remove(k); });
+  keyMeshes = [];
+  for(let i=0;i<maze.length;i++){
+    for(let j=0;j<maze[i].length;j++){
+      if(maze[i][j]==='K'){
+        const key = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.8, 0.8),
+  keyMaterial
+);
+key.position.set(j * cellSize, 0.6, i * cellSize);
+key.rotation.y = Math.PI / 4;
+scene.add(key);
+keyMeshes.push(key);
+
+      }
+    }
+  }
+  keysCollected = 0;
+
+  // Respawn batteries
+  batteries.forEach(b=>{
+    if(b.mesh) scene.remove(b.mesh);
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.3,0.3), batteryMaterial);
+    mesh.position.set(b.x*cellSize,0.15,b.z*cellSize);
+    scene.add(mesh);
+    b.mesh = mesh;
+  });
+
+  document.getElementById("jumpscare").style.display="none";
+}
+
+// ----- Flashlight System -----
+let flashlightEnergy = 2;
+const maxFlashlightEnergy = 2;
+let flashlightDead = false;
+
+const batteryPickupSound = document.getElementById("batteryPickup");
+const flashlightDieSound = document.getElementById("flashlightDies");
+const flashlightOnSound = document.getElementById("flashlightOn");
+
+// ----- Batteries -----
+const batteries = [
+  {x:3, z:3, mesh:null},
+  {x:9, z:5, mesh:null},
+  {x:1, z:13, mesh:null},
+  {x:17, z:13, mesh:null}
+];
+const batteryTexture = new THREE.TextureLoader().load(
+  'https://raw.githubusercontent.com/antha21/Project/main/Screenshot%202025-12-20%20160910.png'
+);
+const batteryMaterial = new THREE.MeshStandardMaterial({ map: batteryTexture, transparent:true });
+
+batteries.forEach(b=>{
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.3, 0.3), batteryMaterial);
+  mesh.position.set(b.x*cellSize, 0.15, b.z*cellSize);
+  scene.add(mesh);
+  b.mesh = mesh;
+});
+
+// ------------Door----------------
+// Load the door texture
+const doorTexture = new THREE.TextureLoader().load(
+  'https://raw.githubusercontent.com/antha21/Project/main/Screenshot%202025-12-20%20190352.png'
+);
+
+// Create material with the texture
+const doorMaterial = new THREE.MeshStandardMaterial({ map: doorTexture });
+
+// Replace your door mesh material
+doorMesh.material = doorMaterial;
+
+function checkDoorInteraction() {
+    if (!doorMesh) return;
+
+    const dx = camera.position.x - doorMesh.position.x;
+    const dz = camera.position.z - doorMesh.position.z;
+    const dist = Math.sqrt(dx*dx + dz*dz);
+
+    if (dist < 1.5) { // player close enough to door
+        if (keysCollected >= totalKeys) {
+            // Play door opening sound and win
+            doorOpenSound.play().catch(() => {});
+            returnToMenu("You Escaped! 🎉 Code: AFMF");
+        } else {
+            // Play locked door sound
+            doorLockedSound.play().catch(() => {});
+            showMessage(`You need ${totalKeys - keysCollected} more keys!`, 3000);
+        }
+    }
+}
+
+
+
+// ----- Creature as Billboard -----
+const creatureTexture = new THREE.TextureLoader().load(
+  'https://raw.githubusercontent.com/antha21/Project/main/Screenshot_20250615_162031_Snapchat.jpg'
+);
+const creatureWidth = 1.5, creatureHeight = 2;
+const creatureGeometry = new THREE.PlaneGeometry(creatureWidth, creatureHeight);
+creatureGeometry.translate(0, creatureHeight/2, 0);
+const creatureMaterial = new THREE.MeshBasicMaterial({ map: creatureTexture, transparent:true, side:THREE.DoubleSide });
+const creature = new THREE.Mesh(creatureGeometry, creatureMaterial);
+creature.position.set(5*cellSize,0,5*cellSize);
+scene.add(creature);
+
+function updateCreatureRotation(){
+  const dx = camera.position.x - creature.position.x;
+  const dz = camera.position.z - creature.position.z;
+  const angle = Math.atan2(dx,dz);
+  creature.rotation.set(0,angle,0);
+}
+
+// ----- Controls -----
+const keys = {ArrowUp:false,ArrowDown:false,ArrowLeft:false,ArrowRight:false};
+document.addEventListener('keydown',e=>{ if(keys[e.key]!==undefined) keys[e.key]=true; startSounds(); });
+document.addEventListener('keyup',e=>{ if(keys[e.key]!==undefined) keys[e.key]=false; });
+document.addEventListener('click', startSounds);
+
+let soundStarted=false;
+function startSounds(){ if(!soundStarted){ document.getElementById('ambientSound').play().catch(()=>{}); soundStarted=true;}}
+
+// ----- Mini-map -----
+const mapCanvas=document.getElementById('mapCanvas');
+const mapCtx=mapCanvas.getContext('2d');
+function drawMap(){
+  const scale = mapCanvas.width / maze[0].length;
+  mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+
+  // Draw walls
+  for(let i = 0; i < maze.length; i++){
+    for(let j = 0; j < maze[i].length; j++){
+      if(maze[i][j] === '1') {
+        mapCtx.fillStyle = 'white';
+        mapCtx.fillRect(j * scale, i * scale, scale, scale);
+      }
+    }
+  }
+
+  // Keys collected
+  mapCtx.fillStyle = 'yellow';
+  mapCtx.fillText(`${keysCollected}/3`, 5, 15);
+
+  // Green "special" square
+  mapCtx.fillStyle = 'green';
+  mapCtx.fillRect(13 * scale, 11 * scale, scale, scale);
+
+ // Draw creature
+mapCtx.fillStyle = 'purple';
+mapCtx.fillRect(
+  (creature.position.x / cellSize) * scale,
+  (creature.position.z / cellSize) * scale,
+  scale,
+  scale
+);
+
+// Draw player
+mapCtx.fillStyle = 'red';
+mapCtx.fillRect(
+  (playerPosition.x / cellSize) * scale,
+  (playerPosition.z / cellSize) * scale,
+  scale,
+  scale
+);
+ 
+}
+
+// ----- Game Helpers -----
+function isWall(x,z){ const i=Math.round(z/cellSize), j=Math.round(x/cellSize); return maze[i][j]==='1'; }
+function distance(p1,p2){ const dx=p1.x-p2.x, dz=p1.z-p2.z; return Math.sqrt(dx*dx+dz*dz); }
+function jumpScare(){ document.getElementById('jumpscare').style.display='block'; jumpscareSound.play(); document.getElementById('ambientSound').pause(); document.getElementById('creatureSound').pause(); stopFootsteps(); returnToMenu("Game Over!"); }
+function returnToMenu(text=""){ gameStarted=false; gameOver=true; stopFootsteps(); document.getElementById("message").innerText=text; setTimeout(()=>{menu.style.display="flex"; document.getElementById("ambientSound").pause(); document.getElementById('creatureSound').pause();},2000); }
+function updateFlashlightBars(){ 
+  const barContainer=document.getElementById("flashlightBars"); 
+  let bars=""; 
+  for(let i=0;i<maxFlashlightEnergy;i++) bars += (i<Math.ceil(flashlightEnergy)) ? "🔋 ":"⚫ "; 
+  barContainer.innerText = bars; 
+}
+
+// ----- Creature Movement -----
+const creatureSpeed = 0.0475;
+let creatureRound = 0;
+
+function moveCreatureFreely() {
+    let dirX = camera.position.x - creature.position.x;
+    let dirZ = camera.position.z - creature.position.z;
+
+    // Normalize direction
+    const len = Math.sqrt(dirX*dirX + dirZ*dirZ);
+    if (len === 0) return;
+    dirX /= len;
+    dirZ /= len;
+
+    // Attempt to move along X first
+    const nextX = creature.position.x + dirX * creatureSpeed;
+    if (!isWall(nextX, creature.position.z)) {
+        creature.position.x = nextX;
+    }
+
+    // Then attempt to move along Z
+    const nextZ = creature.position.z + dirZ * creatureSpeed;
+    if (!isWall(creature.position.x, nextZ)) {
+        creature.position.z = nextZ;
+    }
+}
+
+const grid = maze.map(row => row.split('').map(cell => cell === '1' ? 1 : 0));
+function moveCreatureWithPath() {
+  if (!creaturePath || creaturePath.length === 0) return;
+  const nextNode = creaturePath[0];
+  const targetX = nextNode.col * cellSize;
+  const targetZ = nextNode.row * cellSize;
+
+  let dx = targetX - creature.position.x;
+  let dz = targetZ - creature.position.z;
+  const dist = Math.sqrt(dx*dx + dz*dz);
+  if (dist < 0.05) {
+    creaturePath.shift();
+  } else {
+    creature.position.x += (dx/dist) * creatureSpeed;
+    creature.position.z += (dz/dist) * creatureSpeed;
+  }
+}
+
+function inDeadEnd(creatureCell) {
+    return deadEnds.some(de => de.row === creatureCell.row && de.col === creatureCell.col);
+}
+
+
+function findPath(grid, start, end) {
+  const rows = grid.length;
+  const cols = grid[0].length;
+  const openSet = [{row:start.row, col:start.col, g:0, f:0, parent:null}];
+  const closedSet = new Set();
+
+  function nodeKey(n){ return `${n.row},${n.col}`; }
+  
+  while(openSet.length > 0){
+    openSet.sort((a,b)=>a.f-b.f);
+    const current = openSet.shift();
+
+    if(current.row === end.row && current.col === end.col){
+      const path = [];
+      let n = current;
+      while(n.parent){
+        path.unshift({row:n.row, col:n.col});
+        n = n.parent;
+      }
+      return path;
+    }
+
+    closedSet.add(nodeKey(current));
+
+    const neighbors = [
+      {row:current.row-1,col:current.col},
+      {row:current.row+1,col:current.col},
+      {row:current.row,col:current.col-1},
+      {row:current.row,col:current.col+1},
+    ];
+
+    for(const n of neighbors){
+      if(n.row<0||n.row>=rows||n.col<0||n.col>=cols) continue;
+      if(grid[n.row][n.col] === 1) continue; // wall
+      if(closedSet.has(nodeKey(n))) continue;
+
+      const gScore = current.g + getCellCost(n.row,n.col); // weighted by dead-end
+      const existing = openSet.find(x=>x.row===n.row && x.col===n.col);
+      if(existing){
+        if(gScore < existing.g){
+          existing.g = gScore;
+          existing.f = gScore + Math.abs(n.row-end.row)+Math.abs(n.col-end.col);
+          existing.parent = current;
+        }
+      } else {
+        openSet.push({
+          row:n.row,
+          col:n.col,
+          g:gScore,
+          f:gScore + Math.abs(n.row-end.row)+Math.abs(n.col-end.col),
+          parent: current
+        });
+      }
+    }
+  }
+
+  return []; // no path found
+}
+
+setInterval(() => {
+    if(gameStarted && !gameOver){
+        const playerCell = {row: Math.round(playerPosition.z/cellSize), col: Math.round(playerPosition.x/cellSize)};
+        const creatureCell = {row: Math.round(creature.position.z/cellSize), col: Math.round(creature.position.x/cellSize)};
+
+        // If creature is stuck in dead-end and player not there
+        if(inDeadEnd(creatureCell) && !(creatureCell.row === playerCell.row && creatureCell.col === playerCell.col)) {
+            // Find nearest non-dead-end cell to escape to
+            let escapeTarget = null;
+            for(let r = 0; r < grid.length; r++){
+                for(let c = 0; c < grid[r].length; c++){
+                    if(grid[r][c] === 0 && !inDeadEnd({row:r,col:c})) {
+                        escapeTarget = {row:r,col:c};
+                        break;
+                    }
+                }
+                if(escapeTarget) break;
+            }
+            if(escapeTarget){
+                creaturePath = findPath(grid, creatureCell, escapeTarget);
+                return;
+            }
+        }
+
+        // Normal chase behavior
+        creaturePath = findPath(grid, creatureCell, playerCell); 
+    }
+}, 500);
+
+function detectDeadEnds(grid) {
+  const deadEnds = [];
+  const rows = grid.length;
+  const cols = grid[0].length;
+  
+  for (let r = 1; r < rows-1; r++) {
+    for (let c = 1; c < cols-1; c++) {
+      if(grid[r][c] === 0){
+        let neighbors = 0;
+        if(grid[r-1][c] === 0) neighbors++;
+        if(grid[r+1][c] === 0) neighbors++;
+        if(grid[r][c-1] === 0) neighbors++;
+        if(grid[r][c+1] === 0) neighbors++;
+        if(neighbors === 1){
+          deadEnds.push({row: r, col: c});
+        }
+      }
+    }
+  }
+  return deadEnds;
+}
+
+const deadEnds = detectDeadEnds(grid);
+
+function getCellCenter(row, col) {
+    return { x: col * cellSize, z: row * cellSize };
+}
+
+
+function getCellCost(row, col){
+  for(let de of deadEnds){
+    if(de.row === row && de.col === col) return 5; // higher cost
+  }
+  return 1; // normal path
+}
+
+function moveCreatureAlongPath() {
+    if (!creaturePath || creaturePath.length === 0) return;
+
+    const nextNode = creaturePath[0];
+    const target = getCellCenter(nextNode.row, nextNode.col);
+
+    let dx = target.x - creature.position.x;
+    let dz = target.z - creature.position.z;
+    const dist = Math.sqrt(dx*dx + dz*dz);
+
+    if (dist < 0.01) { // reached the center of this cell
+        creature.position.x = target.x;
+        creature.position.z = target.z;
+        creaturePath.shift(); // move to next cell
+    } else {
+        // Move proportionally
+        creature.position.x += (dx / dist) * creatureSpeed;
+        creature.position.z += (dz / dist) * creatureSpeed;
+    }
+}
+
+
+const creatureSpawns = [
+  { x: 1 * cellSize, z: 1 * cellSize },   // first play
+  { x: 17 * cellSize, z: 3 * cellSize },  // second play
+  { x: 23 * cellSize, z: 3 * cellSize }, // Third play
+  // add more later if you want
+];
+
+let creatureSpawnIndex = 0;
+
+
+function spawnCreature() {
+  const spawn = creatureSpawns[creatureSpawnIndex];
+
+  creature.position.set(spawn.x, 0, spawn.z);
+  creaturePath = []; // reset path so it recalculates cleanly
+
+  // Move to next spawn for next death/restart
+  creatureSpawnIndex++;
+  if (creatureSpawnIndex >= creatureSpawns.length) {
+    creatureSpawnIndex = 0; // loop back if you want
+  }
+}
+
+
+
+// ----- Animate -----
+function animate(){
+  requestAnimationFrame(animate);
+  if(!gameStarted || gameOver) return;
+  keyMeshes.forEach(k => {
+  if (!k) return;
+  k.position.y = 0.6 + Math.sin(performance.now() * 0.003) * 0.1;
+});
+
+
+
+  flickerTime+=0.05;
+  if(!flashlightDead) { flashlight.intensity = 1.8 + Math.sin(flickerTime*10)*0.4 + Math.random()*0.2; } else { flashlight.intensity = 0.025; }
+  if(!flashlightDead){
+    flashlightEnergy -= 0.0005;
+    if(flashlightEnergy <=0){ flashlightEnergy=0; flashlightDead=true; flashlightDieSound.play(); showMessage("Flashlight Died!", 3000); }
+  }
+
+  checkDoorInteraction();
+
+  if(gameOver){
+     stopFootSteps();
+     return;
+  }
+
+  const speed=0.05;
+  let dx=0,dz=0;
+  if(keys.ArrowUp){dx-=Math.sin(camera.rotation.y)*speed; dz-=Math.cos(camera.rotation.y)*speed;}
+  if(keys.ArrowDown){dx+=Math.sin(camera.rotation.y)*speed; dz+=Math.cos(camera.rotation.y)*speed;}
+  const newX = camera.position.x + dx, newZ = camera.position.z + dz;
+  if (!isWall(newX,newZ)) { camera.position.x = newX; camera.position.z = newZ; }
+  
+  updateFootsteps();  
+  if(keys.ArrowLeft) camera.rotation.y+=0.03;
+  if(keys.ArrowRight) camera.rotation.y-=0.03;
+
+  moveCreatureFreely();
+  updateCreatureRotation();
+  
+  
+
+
+// ----- Creature Sound -----
+ 
+// Creature sound volume based on distance
+const dist = distance(camera.position, creature.position);
+const maxHearDist = 15; // maximum distance to hear creature
+let volume = 1 - Math.min(dist / maxHearDist, 1); // closer = louder, farther = softer
+creatureSound.volume = volume * 1; // adjust multiplier for overall loudness
+
+// Make sure it starts playing if not already
+if(creatureSound.paused) creatureSound.play().catch(()=>{});
+
+  if(distance(camera.position,creature.position)<4 && Math.random()<0.01) document.getElementById('creatureGrowl').play();
+
+  playerPosition.x=camera.position.x/cellSize;
+  playerPosition.z=camera.position.z/cellSize;
+
+  keyMeshes.forEach((key, index) => {
+    if (key && distance(camera.position, key.position) < 0.5) {
+  if (key.userData.glowLight) {
+    scene.remove(key.userData.glowLight);
+  }
+
+  scene.remove(key);
+  keyMeshes[index] = null;
+
+  keysCollected++;
+  keyPickupSound.play();
+  showMessage(`Key collected (${keysCollected}/3)`, 3000);
+}
+
+  });
+
+  if(distance(camera.position,doorMesh.position)<0.5){
+    if(keysCollected === totalKeys){ returnToMenu("You Escaped!"); }
+    else{ showMessage(`Door Locked (${keysCollected}/3 keys)`, 2000); }
+  }
+
+  if(distance(camera.position,creature.position)<0.7){ jumpScare(); gameOver=true; }
+
+  batteries.forEach(b=>{
+    if(b.mesh && distance(camera.position,b.mesh.position)<0.5){
+      flashlightEnergy = maxFlashlightEnergy;
+      flashlightDead = false;
+      flashlightOnSound.play();
+      scene.remove(b.mesh);
+      b.mesh=null;
+      batteryPickupSound.play();
+      showMessage("Flashlight Recharged!", 3000);
+    }
+  });
+
+  updateFlashlightBars();
+  //drawMap();
+  renderer.render(scene,camera);
+}
+animate();
+
+// ----- Message Helper -----
+function showMessage(text, duration = 3000) {
+  const msg = document.getElementById("message");
+  msg.innerText = text;
+  msg.style.display = "block";
+
+  clearTimeout(msg._timeout);
+  msg._timeout = setTimeout(() => {
+    msg.innerText = "";
+    msg.style.display = "none";
+  }, duration);
+}
+
+
+window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight); });
+
+</script>
+</body>
+</html>

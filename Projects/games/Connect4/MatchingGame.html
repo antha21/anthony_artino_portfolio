@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Match</title>
+<style>
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: radial-gradient(circle at center, #004d00 0%, #002200 100%);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; text-align: center; padding: 10px; box-sizing: border-box; }
+.active { display: flex; }
+
+h1 { font-size: 2rem; margin-bottom: 20px; text-shadow: 2px 2px 6px rgba(0,0,0,0.7); }
+button { background: #ff9800; border: none; padding: 10px 30px; color: #fff; font-size: 1.2rem; cursor: pointer; border-radius: 10px; margin-top: 15px; transition: 0.3s; box-shadow: 0 5px 10px rgba(0,0,0,0.4); }
+button:hover { background: #e68900; transform: scale(1.05); }
+
+#game-grid { display: grid; grid-template-columns: repeat(6, 90px); grid-gap: 10px; margin-top: 20px; perspective: 1000px; }
+.card { width: 90px; height: 130px; cursor: pointer; }
+.card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+.card.flipped .card-inner { transform: rotateY(180deg); }
+
+.card-front, .card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  backface-visibility: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+}
+.card-back {
+  background: #fff;
+  border: 2px solid #d60000;
+  color: #d60000;
+  font-size: 1.6rem;
+  text-shadow: 1px 1px 2px #900000;
+  background-image: repeating-linear-gradient(45deg, #ffdddd 0, #ffdddd 2px, #fff 2px, #fff 6px);
+}
+.card-front { transform: rotateY(180deg); overflow: hidden; background: #fff; border: 2px solid #ccc; }
+.card-front img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+
+.card.matched .card-inner { box-shadow: 0 0 12px 4px #4caf50; }
+
+.card:hover { transform: translateY(-3px); transition: 0.3s; }
+
+#timer { font-size: 1.5rem; margin-top: 10px; font-weight: bold; text-shadow: 2px 2px 5px #000; }
+</style>
+</head>
+<body>
+
+<div id="start-menu" class="screen active">
+  <h1>🎰 Memory Match 🎰</h1>
+  <button id="start-btn">Start Game</button>
+</div>
+
+<div id="game-screen" class="screen">
+  <h1>Match the Cards!</h1>
+  <div id="timer">01:30</div>
+  <div id="game-grid"></div>
+</div>
+
+<div id="win-screen" class="screen">
+  <h1>🎉 Congratulations! You Won! 🎉</h1>
+  <h2> Code: DMMR </h2>
+  <button onclick="goToMenu()">Back to Menu</button>
+</div>
+
+<div id="lose-screen" class="screen">
+  <h1>⏰ Time's Up! You Lost! ⏰</h1>
+  <button onclick="goToMenu()">Try Again</button>
+</div>
+
+<!-- Background Music -->
+<audio id="bg-music" loop>
+  <source src="C:\Users\anthp\OneDrive\Desktop\Connect4\CasinoChristmas.mp3" type="audio/mp3">
+</audio>
+
+<!-- Flip and Match Sounds -->
+<audio id="flip-sound">
+  <source src="C:/Users/anthp/OneDrive/Desktop/Connect4/CardFlip.mp3" type="audio/mp3">
+</audio>
+
+<audio id="match-sound">
+  <source src="C:/Users/anthp/OneDrive/Desktop/Connect4/ytmp3free.cc_correct-sound-effect-youtubemp3free.org.mp3" type="audio/mp3">
+</audio>
+
+<script>
+const startBtn = document.getElementById('start-btn');
+const startMenu = document.getElementById('start-menu');
+const gameScreen = document.getElementById('game-screen');
+const winScreen = document.getElementById('win-screen');
+const loseScreen = document.getElementById('lose-screen');
+const gameGrid = document.getElementById('game-grid');
+const timerDisplay = document.getElementById('timer');
+const bgMusic = document.getElementById('bg-music');
+const flipSound = document.getElementById('flip-sound');
+const matchSound = document.getElementById('match-sound');
+
+const images = [
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot_20251208_220443_Snapchat.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/TimC.webp",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/Tony Artino.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/Chris Wallace.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/Father Heilman.png",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/Laird Niven.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/Mr. Duncan.webp",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/Nathan Drake.webp",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot_20250615_162031_Snapchat.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot_20251208_215950_Gallery.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot_20251208_220146_Gallery.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot_20251208_220252_Gallery.jpg"
+];
+
+let firstCard = null;
+let secondCard = null;
+let lockBoard = false;
+let matches = 0;
+let timer;
+let timeLeft = 90;
+
+startBtn.addEventListener('click', () => {
+  startMenu.classList.remove('active');
+  gameScreen.classList.add('active');
+  bgMusic.play();
+  startGame();
+});
+
+function startGame() {
+  matches = 0;
+  firstCard = null;
+  secondCard = null;
+  lockBoard = false;
+  timeLeft = 90;
+  timerDisplay.textContent = formatTime(timeLeft);
+
+  const cardsArray = [...images, ...images];
+  shuffle(cardsArray);
+
+  gameGrid.innerHTML = '';
+  cardsArray.forEach(src => {
+    const card = document.createElement('div');
+    card.classList.add('card');
+
+    const inner = document.createElement('div');
+    inner.classList.add('card-inner');
+
+    const front = document.createElement('div');
+    front.classList.add('card-front');
+    front.innerHTML = `<img src="${src}">`;
+
+    const back = document.createElement('div');
+    back.classList.add('card-back');
+    back.textContent = "🂠";
+
+    inner.appendChild(front);
+    inner.appendChild(back);
+    card.appendChild(inner);
+
+    card.dataset.image = src;
+    card.addEventListener('click', handleCardClick);
+
+    gameGrid.appendChild(card);
+  });
+
+  clearInterval(timer);
+  timer = setInterval(() => {
+    timeLeft--;
+    timerDisplay.textContent = formatTime(timeLeft);
+    if(timeLeft <= 0){
+      clearInterval(timer);
+      bgMusic.pause();
+      showScreen(loseScreen);
+    }
+  }, 1000);
+}
+
+function handleCardClick() {
+  if(lockBoard || this === firstCard || this.classList.contains('matched')) return;
+
+  this.classList.add('flipped');
+  flipSound.currentTime = 0;
+  flipSound.play();
+
+  if(!firstCard) {
+    firstCard = this;
+    return;
+  }
+
+  secondCard = this;
+  lockBoard = true;
+
+  if(firstCard.dataset.image === secondCard.dataset.image) {
+    firstCard.classList.add('matched');
+    secondCard.classList.add('matched');
+    matchSound.currentTime = 0;
+    matchSound.play();
+    matches++;
+    resetBoard();
+    if(matches === images.length){
+      clearInterval(timer);
+      bgMusic.pause();
+      showScreen(winScreen);
+    }
+  } else {
+    setTimeout(() => {
+      firstCard.classList.remove('flipped');
+      secondCard.classList.remove('flipped');
+      resetBoard();
+    }, 1000);
+  }
+}
+
+function resetBoard() {
+  [firstCard, secondCard] = [null, null];
+  lockBoard = false;
+}
+
+function shuffle(array){
+  for(let i=array.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [array[i], array[j]]=[array[j], array[i]];
+  }
+}
+
+function formatTime(sec){
+  const min=Math.floor(sec/60);
+  const s=sec%60;
+  return `${min.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+}
+
+function showScreen(screen){
+  startMenu.classList.remove('active');
+  gameScreen.classList.remove('active');
+  winScreen.classList.remove('active');
+  loseScreen.classList.remove('active');
+  screen.classList.add('active');
+}
+
+function goToMenu(){
+  showScreen(startMenu);
+  bgMusic.pause();
+  bgMusic.currentTime = 0;
+}
+</script>
+</body>
+</html>

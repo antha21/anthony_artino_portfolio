@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>⚔️ MGS Tic-Tac-Toe — Boss Fight (Final) ⚔️</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg-green: #07140b;
+    --hud-green: #8aff7a;
+    --muted-green: #6bbf6a;
+    --danger: #ff4b4b;
+    --panel: rgba(0,0,0,0.75);
+  }
+  html,body{height:100%;margin:0;font-family:"Orbitron",sans-serif;background:radial-gradient(ellipse at center,#0b1a12 0%,#020403 60%);color:var(--hud-green);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+  .wrap{height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+  .crt{position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;background-image:linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);background-size:100% 3px;opacity:0.6;}
+  .container{width:920px;max-width:95%;background:linear-gradient(180deg,rgba(0,0,0,0.55),rgba(0,0,0,0.65));border:2px solid rgba(138,255,122,0.08);box-shadow:0 12px 40px rgba(0,0,0,0.9),inset 0 0 30px rgba(138,255,122,0.03);border-radius:10px;padding:22px;display:grid;grid-template-columns:360px 1fr;gap:18px;position:relative;}
+  .hud{background:linear-gradient(180deg,rgba(0,0,0,0.6),rgba(0,0,0,0.5));border-radius:8px;padding:18px;color:var(--hud-green);box-shadow:inset 0 0 20px rgba(0,0,0,0.5);min-height:420px;display:flex;flex-direction:column;justify-content:space-between;}
+  .title{font-family:"Press Start 2P",monospace;letter-spacing:1px;font-size:14px;color:var(--muted-green);margin-bottom:8px;}
+  .logo{font-size:20px;color:var(--hud-green);text-shadow:0 1px 0 #000;margin-bottom:18px;}
+  .health-block{margin-bottom:18px;}
+  .label{font-size:12px;color:#9ff9b8;margin-bottom:6px;}
+  .health-bar-container{width:100%;height:28px;background:#0b0b0b;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,0.03);box-shadow:inset 0 -4px 12px rgba(0,0,0,0.6);}
+  .health-bar{height:100%;width:100%;background:linear-gradient(90deg,#4fff6b 0%, #ffb86b 60%, #ff4b4b 100%);transform-origin:left center;transition:width 450ms ease-in-out;box-shadow:inset 0 0 8px rgba(255,255,255,0.06);}
+  .health-meta{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:#bfffc1;}
+  .controls{margin-top:12px;}
+  .btn{display:inline-block;padding:10px 14px;background:linear-gradient(180deg,#111,#2a2a2a);color:var(--hud-green);border-radius:6px;border:1px solid rgba(138,255,122,0.06);cursor:pointer;font-weight:700;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,0.6);transition:transform .12s;}
+  .btn:active{transform:translateY(2px);}
+  .muted{font-size:11px;color:#86c78e;margin-top:8px;}
+  .play-area{padding:16px;border-radius:8px;background:repeating-linear-gradient(90deg,rgba(0,0,0,0.03) 0 1px, transparent 1px 24px);min-height:420px;display:flex;flex-direction:column;align-items:center;}
+  .hud-top{width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .encounter{font-family:"Press Start 2P",monospace;font-size:12px;color:var(--muted-green);}
+  .round{font-size:11px;color:#9ff9b8;}
+  .grid{display:grid;grid-template-columns:repeat(3,150px);grid-template-rows:repeat(3,150px);gap:18px;padding:12px;background:linear-gradient(180deg,rgba(0,0,0,0.25),rgba(0,0,0,0.15));border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,0.6);}
+  .cell{width:150px;height:150px;background:linear-gradient(180deg,#121815,#0c0e0c);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;box-shadow:inset 0 -6px 18px rgba(0,0,0,0.7),0 8px 20px rgba(0,0,0,0.7);border:1px solid rgba(138,255,122,0.04);transition:transform .12s,box-shadow .12s;}
+  .cell:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 14px 36px rgba(0,0,0,0.75);}
+  .piece{width:86px;height:86px;object-fit:cover;border-radius:8px;filter:drop-shadow(0 6px 20px rgba(0,0,0,0.8)) saturate(1.1);transform:translateY(6px);transition:transform .18s ease,filter .18s ease;}
+  .cell.filled .piece{transform:translateY(0) scale(1);}
+  .flash{position:absolute;inset:0;background:rgba(255,80,80,0.06);pointer-events:none;opacity:0;transition:opacity .12s;}
+  .damage-shake{animation:shake .34s;}
+  @keyframes shake{10%{transform:translateX(-6px)}30%{transform:translateX(6px)}50%{transform:translateX(-4px)}70%{transform:translateX(4px)}100%{transform:translateX(0)}}
+  .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:40;opacity:0;pointer-events:none;transition:opacity .18s;}
+  .overlay.active{opacity:1;pointer-events:auto;}
+  .overlay-card{background:rgba(5,5,5,0.9);border-radius:10px;padding:26px;text-align:center;color:var(--hud-green);border:1px solid rgba(138,255,122,0.06);}
+  .overlay-card h2{margin:6px 0 10px 0;font-family:"Press Start 2P";}
+  .overlay-card p{margin:8px 0 14px 0;color:#bfffc1;font-size:12px;}
+  @media (max-width:900px){.container{grid-template-columns:1fr;gap:12px;padding:14px}.grid{grid-template-columns:repeat(3,90px);grid-template-rows:repeat(3,90px);gap:10px}.cell{width:90px;height:90px}.piece{width:52px;height:52px}.hud{min-height:auto}}
+  /* START SCREEN overlay */
+  .start-screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,0.75),rgba(0,0,0,0.85));z-index:60;flex-direction:column;gap:12px;}
+  .start-card{background:rgba(0,0,0,0.7);padding:28px;border-radius:10px;border:1px solid rgba(138,255,122,0.06);text-align:center}
+  .start-card h1{font-family:"Press Start 2P";color:var(--hud-green);margin:0 0 12px 0}
+  .start-small{font-size:12px;color:#9ff9b8;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crt"></div>
+
+  <div class="container" role="application" aria-label="MGS Tic Tac Toe boss fight">
+    <!-- LEFT HUD -->
+    <div class="hud" aria-hidden="false">
+      <div>
+        <div class="title">MGS — BOSS ENCOUNTER</div>
+        <div class="logo">TIC-TAC-TACTICAL</div>
+
+        <div class="health-block">
+          <div class="label">PLAYER — SNAKE</div>
+          <div class="health-bar-container" aria-hidden="true">
+            <div id="playerHealthBar" class="health-bar" style="width:100%"></div>
+          </div>
+          <div class="health-meta">
+            <div id="playerHealthText">100%</div>
+            <div>HP</div>
+          </div>
+        </div>
+
+        <div class="health-block">
+          <div class="label">ENEMY — LIQUID SNAKE</div>
+          <div class="health-bar-container" aria-hidden="true">
+            <div id="aiHealthBar" class="health-bar" style="width:100%"></div>
+          </div>
+          <div class="health-meta">
+            <div id="aiHealthText">100%</div>
+            <div>HP</div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <div class="label">AUDIO</div>
+          <div style="display:flex; gap:8px; margin-top:6px;">
+            <button class="btn" id="muteMusicBtn">Mute Music</button>
+            <button class="btn" id="muteSfxBtn">Mute SFX</button>
+          </div>
+          <div class="muted">BG music starts when you Engage in Battle.</div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn" id="resetBtn" onclick="backToMenu()">RESET</button>
+        </div>
+        <div style="margin-top:10px; font-size:11px; color:#9ff9b8;">
+          Best of 7 converted into health bars — each round hit subtracts 25% health.
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PLAY AREA -->
+    <div class="play-area" id="playArea">
+      <div class="hud-top">
+        <div class="encounter">ENCOUNTER: <strong>Metal Gear — Sector</strong></div>
+        <div class="round" id="roundText">Round: 1</div>
+      </div>
+
+      <div id="boardWrap" class="board-wrap" style="position:relative;">
+        <div class="grid" id="grid" role="grid" aria-label="game board"></div>
+        <div id="hitFlash" class="flash" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WIN / LOSE OVERLAYS -->
+  <div id="winOverlay" class="overlay" role="dialog" aria-hidden="true">
+    <div class="overlay-card">
+      <h2>MISSION COMPLETE</h2>
+      <p>Liquid Snake defeated. Snake survives.</p>
+      <p>Code: AD41</p>
+      <button class="btn" onclick="backToMenu()">RETURN</button>
+    </div>
+  </div>
+
+  <div id="loseOverlay" class="overlay" role="dialog" aria-hidden="true">
+    <div class="overlay-card">
+      <h2>MISSION FAILED</h2>
+      <p>Snake eliminated. Try again.</p>
+      <button class="btn" onclick="backToMenu()">RETURN</button>
+    </div>
+  </div>
+
+  <!-- START SCREEN (separate engage option) -->
+  <div id="startScreen" class="start-screen" aria-hidden="false">
+    <div class="start-card">
+      <h1>MISSION BRIEFING</h1>
+      <div style="margin:12px 0; color:#bfffc1;">
+        Welcome operative. Prepare for a one-on-one boss duel with Liquid Snake.
+      </div>
+      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn" id="briefingBtn" onclick="openBriefing()">BRIEFING</button>
+        <button class="btn" id="engageBtn" onclick="engageBattle()">ENGAGE IN BATTLE</button>
+      </div>
+      <div class="start-small">Click <strong>Engage in Battle</strong> to start the fight.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- AUDIO (background as element) ---------- -->
+<audio id="bgMusic" src="C:/Users/anthp/OneDrive/Desktop/Connect4/Metal Gear Solid- Duel (Boss Battle Theme).mp3" loop preload="auto"></audio>
+
+<script>
+/* =========================
+   Final game + sfx integration
+   ========================= */
+
+/* ====== Paths to images & sfx (user-provided full paths) ====== */
+const SNAKE_IMG = "C:/Users/anthp/OneDrive/Desktop/Connect4/SnakeProfile.webp";
+const LIQUID_IMG = "C:/Users/anthp/OneDrive/Desktop/Connect4/LiquidProfile.jpg";
+
+/* SFX audio objects */
+const snakeHitSfx = new Audio("C:/Users/anthp/OneDrive/Desktop/Connect4/SnakeHit.mp3");
+const shotSfx = new Audio("C:/Users/anthp/OneDrive/Desktop/Connect4/MGSshot.mp3");
+const enemyHitSfx = new Audio("C:/Users/anthp/OneDrive/Desktop/Connect4/EnemyHit.mp3");
+const deathScreamSfx = new Audio("C:/Users/anthp/OneDrive/Desktop/Connect4/ytmp3free.cc_metal-gear-solid-snake-death-scream-sound-effect-youtubemp3free.org.mp3");
+
+const drawSfx = new Audio("C:/Users/anthp/OneDrive/Desktop/Connect4/ReturnPositionsMGS.mp3");
+
+
+/* Helper to play SFX */
+function playSfx(sfx) {
+  if (sfxMuted) return;
+  try {
+    sfx.currentTime = 0; // rewind to start
+    sfx.play().catch(e => console.warn("SFX play blocked:", e));
+  } catch (err) {
+    console.error("SFX error", err);
+  }
+}
+
+/* Health / state */
+let playerHealth = 100;
+let aiHealth = 100;
+let currentGame = Array(9).fill('');
+let playerTurn = true;
+let playerFirst = true;
+const PLAYER_DAMAGE = 17; // 6 hits ≈ 102%
+const AI_DAMAGE = 25;     // 4 hits = 100%
+let roundNumber = 1;
+
+/* Elements */
+const gridEl = document.getElementById('grid');
+const playerBar = document.getElementById('playerHealthBar');
+const aiBar = document.getElementById('aiHealthBar');
+const playerText = document.getElementById('playerHealthText');
+const aiText = document.getElementById('aiHealthText');
+const roundText = document.getElementById('roundText');
+const hitFlash = document.getElementById('hitFlash');
+const winOverlay = document.getElementById('winOverlay');
+const loseOverlay = document.getElementById('loseOverlay');
+const startScreen = document.getElementById('startScreen');
+const bgMusic = document.getElementById('bgMusic');
+const muteMusicBtn = document.getElementById('muteMusicBtn');
+const muteSfxBtn = document.getElementById('muteSfxBtn');
+
+/* Audio context for amplified SFX */
+const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioContextClass();
+
+/* Mute flags */
+let musicMuted = false;
+let sfxMuted = false;
+
+/* Play loud sound helper */
+function playLoudSound(src, gainVal = .0, playbackRate = 1.0) {
+  if (sfxMuted) return;
+  try {
+    const audio = new Audio(src);
+    audio.preload = "auto";
+    audio.playbackRate = playbackRate;
+
+    const track = audioCtx.createMediaElementSource(audio);
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = Math.min(Math.max(gainVal, 0.1), 12); // clamp
+    track.connect(gainNode).connect(audioCtx.destination);
+
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    audio.addEventListener('ended', () => {
+      try { track.disconnect(); gainNode.disconnect(); } catch(e){}
+    });
+    audio.play().catch(e => console.warn("SFX play blocked:", e));
+    return audio;
+  } catch (err) {
+    console.error("playLoudSound error", err);
+  }
+}
+
+/* Preload images */
+function preloadImages(list) {
+  list.forEach(src => { const i = new Image(); i.src = src; });
+}
+preloadImages([SNAKE_IMG, LIQUID_IMG]);
+
+/* Render grid */
+function renderGrid() {
+  gridEl.innerHTML = '';
+  currentGame.forEach((cell,i) => {
+    const div = document.createElement('div');
+    div.className = 'cell' + (cell ? ' filled' : '');
+    div.setAttribute('role','button');
+    div.setAttribute('aria-label', `cell ${i+1}`);
+    div.addEventListener('click', () => makeMove(i));
+    if (cell === 'X') {
+      const img = document.createElement('img');
+      img.className = 'piece';
+      img.src = SNAKE_IMG;
+      img.alt = 'Snake';
+      div.appendChild(img);
+    } else if (cell === 'O') {
+      const img = document.createElement('img');
+      img.className = 'piece';
+      img.src = LIQUID_IMG;
+      img.alt = 'Liquid Snake';
+      div.appendChild(img);
+    }
+    gridEl.appendChild(div);
+  });
+}
+
+/* Start screen helpers */
+function openBriefing() {
+  alert("Briefing: Snake! You need to defeat Liquid Snake in a intense game of Tic-Tac-Toe. Each round win deals 16.67% of damage to the opponent. Good luck, operative.");
+}
+function engageBattle() {
+  // resume audio context on user gesture
+  if (audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+  startScreen.style.display = 'none';
+  startGame();
+}
+
+/* Game lifecycle */
+function startGame() {
+  // reset
+  playerHealth = 100; aiHealth = 100;
+  currentGame = Array(9).fill('');
+  playerFirst = true; playerTurn = true; roundNumber = 1;
+  updateHealthBars();
+  renderGrid();
+  roundText.textContent = `Round: ${roundNumber}`;
+
+  // play bg music quieter
+  bgMusic.volume = 0.18;
+  if (!musicMuted) {
+    bgMusic.play().catch(e => console.log("BG play blocked:", e));
+  }
+}
+
+function backToMenu() {
+  // stop music and overlays
+  try { bgMusic.pause(); bgMusic.currentTime = 0; } catch(e){}
+  winOverlay.classList.remove('active');
+  loseOverlay.classList.remove('active');
+
+  // show start screen again
+  startScreen.style.display = 'flex';
+
+  // reset variables
+  playerHealth = 100; aiHealth = 100;
+  currentGame = Array(9).fill('');
+  updateHealthBars();
+  renderGrid();
+  roundNumber = 1;
+  roundText.textContent = `Round: ${roundNumber}`;
+}
+
+/* Round handling */
+function startRound() {
+  currentGame = Array(9).fill('');
+  playerTurn = playerFirst;
+  playerFirst = !playerFirst;
+  roundNumber++;
+  roundText.textContent = `Round: ${roundNumber}`;
+  renderGrid();
+  if (!playerTurn) setTimeout(aiMove, 420);
+}
+
+/* Moves */
+function makeMove(idx) {
+  if (currentGame[idx] || !playerTurn) return;
+  currentGame[idx] = 'X';
+  renderGrid();
+  if (checkWinner('X')) return;
+  playerTurn = false;
+  setTimeout(aiMove, 420);
+}
+function aiMove() {
+  const move = easyAIMove();
+  if (move == null) return;
+  currentGame[move] = 'O';
+  renderGrid();
+  if (checkWinner('O')) return;
+  playerTurn = true;
+}
+
+/* AI logic (minimax + randomness) */
+function easyAIMove() {
+  const available = currentGame.map((v,i)=> v===''? i : null).filter(v=>v!==null);
+  if (available.length === 0) return null;
+  if (Math.random() < 0.7) return bestMove();
+  return available[Math.floor(Math.random()*available.length)];
+}
+function bestMove() {
+  function evaluate(board) {
+    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (const w of wins) {
+      if (w.every(i => board[i] === 'O')) return 10;
+      if (w.every(i => board[i] === 'X')) return -10;
+    }
+    if (board.every(c => c !== '')) return 0;
+    return null;
+  }
+  function minimax(board, depth, isMax) {
+    const score = evaluate(board);
+    if (score !== null) return score;
+    if (isMax) {
+      let best = -Infinity;
+      for (let i=0;i<9;i++){
+        if (board[i]==='') { board[i] = 'O'; const v = minimax(board, depth+1, false); board[i]=''; best = Math.max(best, v); }
+      }
+      return best;
+    } else {
+      let best = Infinity;
+      for (let i=0;i<9;i++){
+        if (board[i]==='') { board[i] = 'X'; const v = minimax(board, depth+1, true); board[i]=''; best = Math.min(best, v); }
+      }
+      return best;
+    }
+  }
+
+  let bestScore = -Infinity; let move = null;
+  for (let i=0;i<9;i++){
+    if (currentGame[i]==='') {
+      currentGame[i] = 'O';
+      const sc = minimax(currentGame, 0, false);
+      currentGame[i] = '';
+      if (sc > bestScore) { bestScore = sc; move = i; }
+    }
+  }
+  return move;
+}
+
+/* Winner & health updates + SFX calls */
+function checkWinner(player) {
+  const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for (const w of wins) {
+    if (w.every(i => currentGame[i] === player)) {
+      // play universal shot sound whenever health is lost
+	playSfx(shotSfx);
+      if (player === 'X') {
+  // Player wins round → weaker damage to Liquid
+  aiHealth = Math.max(0, aiHealth - PLAYER_DAMAGE);
+  playSfx(enemyHitSfx);
+} else {
+  // Liquid wins round → full damage to player
+  playerHealth = Math.max(0, playerHealth - AI_DAMAGE);
+  playSfx(snakeHitSfx);
+}
+
+
+      triggerHitFX();
+      updateHealthBars();
+
+      setTimeout(() => {
+        if (playerHealth <= 0) {
+          // player lost: stop music & play death scream
+          try { bgMusic.pause(); bgMusic.currentTime = 0; } catch(e){}
+          playSfx(deathScreamSfx);
+          loseOverlay.classList.add('active');
+          loseOverlay.setAttribute('aria-hidden','false');
+        } else if (aiHealth <= 0) {
+          // enemy lost
+          try { bgMusic.pause(); bgMusic.currentTime = 0; } catch(e){}
+          winOverlay.classList.add('active');
+          winOverlay.setAttribute('aria-hidden','false');
+        } else {
+          startRound();
+        }
+      }, 420);
+
+      return true;
+    }
+  }
+
+  // draw handling (round draw)
+  if (currentGame.every(c => c !== '')) {
+    // small feedback, then start next round
+    playSfx(drawSfx);
+    setTimeout(() => startRound(), 420);
+    return true;
+  }
+  return false;
+}
+
+/* UI updates */
+function updateHealthBars() {
+  playerBar.style.width = `${playerHealth}%`;
+  aiBar.style.width = `${aiHealth}%`;
+  playerText.textContent = `${playerHealth}%`;
+  aiText.textContent = `${aiHealth}%`;
+}
+
+/* Visual feedback */
+function triggerHitFX() {
+  hitFlash.style.opacity = 0.9;
+  setTimeout(()=> hitFlash.style.opacity = 0, 120);
+  const boardWrap = document.getElementById('boardWrap');
+  boardWrap.classList.add('damage-shake');
+  setTimeout(()=> boardWrap.classList.remove('damage-shake'), 360);
+}
+
+/* Mute toggles */
+muteMusicBtn.addEventListener('click', () => {
+  musicMuted = !musicMuted;
+  if (musicMuted) { try { bgMusic.pause(); } catch(e){}; muteMusicBtn.textContent = 'Unmute Music'; }
+  else { try { bgMusic.play(); } catch(e){}; muteMusicBtn.textContent = 'Mute Music'; }
+});
+muteSfxBtn.addEventListener('click', () => {
+  sfxMuted = !sfxMuted;
+  muteSfxBtn.textContent = sfxMuted ? 'Unmute SFX' : 'Mute SFX';
+});
+
+/* Initialize board */
+(function initBoard(){
+  currentGame = Array(9).fill('');
+  renderGrid();
+})();
+
+/* Expose some functions to global for buttons */
+window.backToMenu = backToMenu;
+window.startGame = startGame;
+window.engageBattle = engageBattle;
+window.openBriefing = openBriefing;
+
+/* Ensure audio context resumes on the first user gesture if needed */
+window.addEventListener('click', function onceStart() {
+  if (audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+  window.removeEventListener('click', onceStart);
+}, { once:true });
+
+</script>
+</body>
+</html>

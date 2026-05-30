@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🎮 Christmas JAMPACK Demo Disc</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+/* ===== GLOBAL ===== */
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: black;
+  color: white;
+  overflow-x: hidden;
+}
+
+h1, h2 {
+  font-family: 'Mountains of Christmas', cursive;
+  text-shadow: 2px 2px 8px black;
+}
+
+.screen {
+  display: none;
+  padding-top: 120px;
+  transition: opacity 1s;
+}
+
+.active {
+  display: block;
+  opacity: 1;
+}
+
+.container {
+  max-width: 1000px;
+  margin: auto;
+  padding: 40px;
+  background: rgba(0,0,0,0.55);
+  border-radius: 20px;
+  box-shadow: 0 0 25px black;
+  text-align: center;
+  position: relative;
+}
+
+/* ===== SPLASH SCREEN ===== */
+#splash {
+  position: fixed;
+  inset: 0;
+  background: black;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  color: white;
+  font-size: 3rem;
+  font-family: 'Mountains of Christmas', cursive;
+}
+
+#splash img {
+  width: 300px;
+  margin-top: 20px;
+}
+
+/* ===== NAV ===== */
+nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 50;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  backdrop-filter: blur(10px);
+  background: rgba(0,0,0,0.45);
+  border-bottom: 2px solid gold;
+}
+
+nav a {
+  font-size: 1.4rem;
+  color: gold;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+nav a.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== GAMES THEME ===== */
+#games .container {
+  background: radial-gradient(circle at top, #1b2a4a 0%, #05080f 70%);
+  border: 3px solid gold;
+  box-shadow: 0 0 40px rgba(255,215,0,0.4);
+  overflow: hidden;
+  clip-path: ellipse(100% 95% at 50% 50%);
+  filter: contrast(1.1) brightness(1.05);
+}
+
+/* CRT SCANLINES & BLOOM */
+#games .container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.03) 0px,
+    rgba(255,255,255,0.03) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  pointer-events: none;
+  mix-blend-mode: lighten;
+  filter: blur(0.5px);
+}
+
+/* ===== CAROUSEL ===== */
+.carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.nav-btn {
+  font-size: 3rem;
+  background: none;
+  border: none;
+  color: gold;
+  cursor: pointer;
+}
+
+.nav-btn:hover {
+  color: white;
+}
+
+/* GAME CARD */
+.game-display {
+  width: 460px;
+  height: 360px;
+  cursor: pointer;
+}
+
+.game-display:hover {
+  transform: scale(1.09);
+}
+
+.game-display img {
+  width: 100%;
+  height: 325px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 10px;
+  border: 4px solid gold;
+  box-shadow:
+    inset 0 0 20px rgba(0,0,0,0.7),
+    0 0 30px rgba(255,215,0,0.6);
+  background: black;
+}
+
+.game-display h2 {
+  margin-top: 5px;
+  font-size: 2.2rem;
+  letter-spacing: 1px;
+}
+
+/* ===== UNLOCK PANEL ===== */
+.unlock-panel {
+  margin-top: 90px;
+  padding: 25px;
+  border-radius: 12px;
+  border: 2px solid gold;
+  background: rgba(0,0,0,0.6);
+}
+
+.unlock-panel input {
+  padding: 12px;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  border: 2px solid gold;
+  width: 220px;
+}
+
+.button {
+  margin-left: 10px;
+  padding: 12px 25px;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  border: 2px solid gold;
+  background: linear-gradient(45deg, #ff2b2b, #b20000);
+  color: white;
+  cursor: pointer;
+}
+
+.button:hover {
+  transform: scale(1.08);
+}
+
+video {
+  border-radius: 15px;
+  border: 3px solid gold;
+}
+
+#final img {
+  max-height: 325px;
+  max-width: 100%;
+  object-fit: contain;   /* shows whole photo */
+  border-radius: 10px;
+  border: 4px solid gold;
+  background: black;    /* clean letterbox look */
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div>DeShrimpo Computer Entertainment</div>
+</div>
+
+<!-- BACKGROUND MUSIC -->
+<audio id="bg-music" loop>
+  <source src="Jampack Volume 11 Demo Disc Theme.mp3" type="audio/mp3">
+</audio>
+
+<audio id="cursor-sound">
+  <source src=""C:/Users/anthp/OneDrive/Desktop/Connect4/Clicker.mp3" type="audio/mp3">
+</audio>
+
+<audio id="transition-sound">
+  <source src="C:/Users/anthp/OneDrive/Desktop/Connect4/Transitions.mp3" type="audio/mp3">
+</audio>
+
+<!-- NAV -->
+<nav>
+  <a onclick="showScreen('home')">Home</a>
+  <a onclick="showScreen('games')">Games</a>
+  <a id="nav-final" class="locked">Final 🔒</a>
+</nav>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div class="container">
+    <h1>🎄 Christmas JAMPACK 2025 🎮</h1>
+    <p>Welcome to this year's new challenge!</p>
+    <p>Complete a series of REAL mini-games to unlock a secret passcode that will lead you to the locations of your Christmas presents. Are you Ready?</p>
+    <p>Select <b>Games</b> above to begin.</p>
+  </div>
+</div>
+
+<!-- GAMES -->
+<div id="games" class="screen">
+  <div class="container">
+    <h1>🎮 GAME SELECTION</h1>
+    <p>Use ◀ ▶ or arrow keys / gamepad</p>
+
+    <div class="carousel">
+      <button class="nav-btn" onclick="prevGame()">◀</button>
+
+      <div class="game-display" onclick="playCursorAndLaunch()">
+        <img id="game-img">
+        <h2 id="game-title"></h2>
+      </div>
+
+      <button class="nav-btn" onclick="nextGame()">▶</button>
+    </div>
+
+    <div class="unlock-panel">
+      <h2>Unlock Final Reward</h2>
+      <input id="final-password" placeholder="ENTER CODE">
+      <button class="button" onclick="unlockFinal()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- FINAL -->
+<div id="final" class="screen">
+  <div class="container">
+
+    <h1>🎄 Congratulations 🎄</h1>
+
+    <p style="max-width: 820px; margin: 30px auto; font-size: 1.1rem; line-height: 1.7;">
+      You have officially beaten every single game and unlocked the final clue to search
+      for your Christmas presents! But before we conclude this scavenger hunt, we need to take a moment to remember someone who made every Christmas feel brighter.
+      <br><br>
+      In memory of <b>Daisy</b>, who filled our home with joy, comfort, and unconditional love, you were family in every sense of the word. Though you may no longer be here with us,
+      your silly personality and presence are forever in our hearts.
+      <br><br>
+      Thus, this 20th anniversary hunt and this Christmas ends with love, gratitude,
+      and remembrance.
+      <br><br>
+      <b>Merry Christmas, Daisy.</b><br>
+      You are deeply loved and never forgotten. ❤️
+    </p>
+
+    <!-- PHOTO CAROUSEL -->
+    <div class="carousel" style="margin-top: 50px;">
+      <button class="nav-btn" onclick="prevPhoto()">◀</button>
+
+      <div class="game-display">
+        <img id="photo-img">
+      </div>
+
+      <button class="nav-btn" onclick="nextPhoto()">▶</button>
+    </div>
+
+    <!-- BUTTONS -->
+    <div style="margin-top: 50px;">
+      <button class="button" onclick="toggleSecret()">Password Secret</button>
+      <button class="button" onclick="toggleClue()">Final Clue</button>
+    </div>
+
+    <!-- SECRET TEXT -->
+    <p id="secret-text" style="display:none; margin-top:40px; font-size:1.05rem; line-height:1.7;">
+      D (Daisy) · M (May) · M (May) · R (Ray) · R (Ray) · C (Chay) · C (Chay) ·
+      E (Eugene) · A (Artino) · D (DeShrimpo)<br><br>
+      4 / 13 / 10.<br><br>
+      W (We) L (Love) Y (You) L (Little) B (Buddy).<br>
+      T (Thanks) F (For) T (The) I (Incredible) A (And)
+      F (Fun) M (Memories), F (Friend).
+    </p>
+
+    <!-- FINAL CLUE -->
+    <p id="final-clue" style="display:none; margin-top:40px; font-size:1.3rem; font-weight:600;">
+      🐾 Seek the westies, they have your gifts protected ;) 🎁
+    </p>
+
+    <br><br>
+    <button class="button" onclick="showScreen('home')">Back Home</button>
+
+  </div>
+</div>
+
+
+<script>
+/* ===== SPLASH SCREEN ===== */
+window.addEventListener("load", () => {
+  const splash = document.getElementById("splash");
+  setTimeout(() => {
+    splash.style.display = "none";
+  }, 3000);
+});
+
+/* ===== SCREEN CONTROL + MUSIC ===== */
+const music = document.getElementById("bg-music");
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  if (id === "games") {
+    music.currentTime = 0;
+    music.play().catch(() => {});
+  } else {
+    music.pause();
+    music.currentTime = 0;
+  }
+}
+
+/* ===== GAME DATA ===== */
+const games = [
+  { title: "Memory Match", img: "C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot 2025-12-22 160955.png", link: "MatchingGame.html" },
+  { title: "Connect 4: Corn Edition", img: "C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot 2025-12-22 152841.png", link: "TheRealConnect4.html" },
+  { title: "Metal Gear Solid: Tic-Tac-Tactical", img: "C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot 2025-12-21 232615.png", link: "Tic-Tac-Toe.html" },
+  { title: "Chump 2028", img: "C:/Users/anthp/OneDrive/Desktop/Connect4/ChumpNews.jpg", link: "Chump2028.html" },
+  { title: "The Space Escape 3D", img: "C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot 2025-12-21 230948.png", link: "WestieInSpace.html" },
+  { title: "The DogMother 3D", img: "C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot 2025-12-21 192238.png", link: "3DPractice.html" },
+  { title: "The West Highland Terror", img: "C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot 2025-12-22 002424.png", link: "Spooky.html" }
+];
+
+let index = 0;
+const cursorSound = document.getElementById("cursor-sound");
+const transitionSound = document.getElementById("transition-sound");
+
+// Make transition louder
+transitionSound.volume = 0.8; // range 0.0 to 1.0
+
+function renderGame() {
+  document.getElementById("game-title").textContent = games[index].title;
+  document.getElementById("game-img").src = games[index].img;
+}
+
+function playCursorAndLaunch() {
+  cursorSound.currentTime = 0;
+  cursorSound.play().catch(() => {});
+  launchGame();
+}
+
+function playTransition() {
+  transitionSound.currentTime = 0;
+  transitionSound.play().catch(() => {});
+}
+
+/* ===== GAME NAVIGATION ONLY MANUAL ===== */
+function nextGame() {
+  index = (index + 1) % games.length;
+  renderGame();
+  playTransition();
+}
+
+function prevGame() {
+  index = (index - 1 + games.length) % games.length;
+  renderGame();
+  playTransition();
+}
+
+function launchGame() {
+  window.open(games[index].link, "_blank");
+}
+
+/* ===== FINAL UNLOCK ===== */
+const FINAL_PASSWORD = "DMMRRCCEAD41310WLYLBTFTIAFMF";
+
+function unlockFinal() {
+  const input = document.getElementById("final-password").value.trim();
+  if (input === FINAL_PASSWORD) {
+    alert("Final Unlocked!");
+    const nav = document.getElementById("nav-final");
+    nav.classList.remove("locked");
+    nav.textContent = "Final";
+    nav.onclick = () => showScreen("final");
+  } else {
+    alert("Incorrect password");
+  }
+}
+
+/* ===== KEYBOARD SUPPORT ===== */
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight") nextGame();
+  if (e.key === "ArrowLeft") prevGame();
+});
+
+/* ===== TAB VISIBILITY ===== */
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    music.pause();
+  } else {
+    if (document.querySelector("#games.active")) {
+      music.play().catch(() => {});
+    }
+  }
+});
+
+/* ===== FINAL PHOTO CAROUSEL ===== */
+const photos = [
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/IMG_20251224_032728.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/IMG_20251224_032803.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/IMG_20251224_032812.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/IMG_20251224_032958.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/IMG_20251224_033008.png",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/image000000 (1).jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/image000000 (2).jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/IMG_20220502_112942_080.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/IMG_20220504_141508_667.jpg",
+  "C:/Users/anthp/OneDrive/Desktop/Connect4/IMG_20220504_141508_699.jpg"
+];
+
+let photoIndex = 0;
+
+function renderPhoto() {
+  document.getElementById("photo-img").src = photos[photoIndex];
+}
+
+function nextPhoto() {
+  photoIndex = (photoIndex + 1) % photos.length;
+  renderPhoto();
+}
+
+function prevPhoto() {
+  photoIndex = (photoIndex - 1 + photos.length) % photos.length;
+  renderPhoto();
+}
+
+/* ===== SECRET & CLUE TOGGLES ===== */
+function toggleSecret() {
+  const el = document.getElementById("secret-text");
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+function toggleClue() {
+  const el = document.getElementById("final-clue");
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+renderPhoto();
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  // 🔽 ALWAYS scroll to top when changing screens
+  window.scrollTo({ top: 0, behavior: "instant" });
+
+  if (id === "games") {
+    music.currentTime = 0;
+    music.play().catch(() => {});
+  } else {
+    music.pause();
+    music.currentTime = 0;
+  }
+}
+
+
+
+renderGame();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>DOOM-Like Maze</title>
+<style>
+body { margin:0; overflow:hidden; background:#000; }
+canvas { display:block; }
+#hud { position:absolute; top:10px; left:10px; color:#0ff; font-family:Consolas; font-size:20px; z-index:10; }
+#msg { position:absolute; top:20px; left:20px; color:#0ff; font-family:Consolas; font-size:22px; text-shadow:0 0 10px #0ff; z-index:9; }
+#startMenu {
+    position:absolute; top:0; left:0; width:100%; height:100%; background:#000;
+    color:#0ff; display:flex; justify-content:center; align-items:center; flex-direction:column;
+    font-family:Consolas; font-size:32px; cursor:pointer; z-index:20;
+}
+button { font-size:28px; padding:14px 28px; background:#111; color:#0ff; border:2px solid #0ff; cursor:pointer; margin-top:12px; }
+.small { font-size:18px; margin-top:8px; color:#88f; cursor:default; }
+.centerText {
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    color:#fff; font-family:Consolas; font-size:64px; text-shadow:0 0 20px #000; z-index:30;
+}
+</style>
+</head>
+<body>
+
+<div id="startMenu">
+    <div style="font-size:48px; margin-bottom:16px;">DOOM-Like Maze</div>
+    <button id="startBtn">START</button>
+    <div class="small">CLICK TO LOCK MOUSE — ARROWS = MOVE / TURN — SPACE = SHOOT</div>
+</div>
+
+<div id="hud"></div>
+<div id="msg">CLICK TO LOCK MOUSE — ARROWS = MOVE / TURN — SPACE = SHOOT</div>
+<canvas id="game"></canvas>
+
+<!-- Audio: put these files in same folder as this html -->
+<audio id="bgMusic" loop>
+    <source src="C:\Users\anthp\OneDrive\Desktop\Connect4\ytmp3free.cc_doom-ost-e1m3-dark-halls-youtubemp3free.org.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="shootSound">
+    <source src="C:\Users\anthp\OneDrive\Desktop\Connect4\ytmp3free.cc_realistic-machine-gun-sound-effects-for-video-project-youtubemp3free.org.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="enemyGunSound">
+    <source src="Magnum 44 sound.mp4" type="audio/mp4">
+</audio>
+
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+resize(); addEventListener("resize", resize);
+
+// UI
+const startMenu = document.getElementById("startMenu");
+const startBtn = document.getElementById("startBtn");
+const hud = document.getElementById("hud");
+const msg = document.getElementById("msg");
+const bgMusic = document.getElementById("bgMusic");
+const shootSound = document.getElementById("shootSound");
+const enemyGunSound = document.getElementById("enemyGunSound");
+
+// Game state
+let gameStarted = false, gameOver = false, gameWin = false, endTimer = 0;
+let keys = {}, shooting = false, mouseDelta = 0, fireCooldown = 0;
+
+// Start game
+startBtn.addEventListener("click", () => {
+    startMenu.style.display = "none";
+    msg.style.display = "none";
+    gameStarted = true;
+    bgMusic.currentTime = 0;
+    bgMusic.play().catch(()=>{});
+    initGame();
+    initItemsAndCar(); // initialize 6 objects + car
+});
+
+let tempMsg = "";
+let tempMsgTimer = 0;
+
+
+
+// Pointer lock
+canvas.addEventListener("click", ()=>canvas.requestPointerLock());
+document.addEventListener("pointerlockchange", () => {
+    msg.style.display = (document.pointerLockElement !== canvas && gameStarted && !gameOver && !gameWin) ? "block" : "none";
+});
+
+// Keyboard input & shooting control
+addEventListener("keydown", e => {
+    keys[e.key] = true;
+    if(e.code === "Space" && !shooting) {
+        shooting = true;
+        shootSound.currentTime = 0;
+        shootSound.loop = true;
+        shootSound.play().catch(()=>{});
+    }
+});
+addEventListener("keyup", e => {
+    keys[e.key] = false;
+    if(e.code === "Space") {
+        shooting = false;
+        shootSound.pause();
+        shootSound.currentTime = 0;
+    }
+});
+
+// Mouse movement
+document.addEventListener("mousemove", e => {
+    if(document.pointerLockElement === canvas) mouseDelta = e.movementX;
+});
+
+// Maze map
+const map = [
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,1,0,1,1,0,1,0,1,0,1,1,1,0,1,0,1,1,1,1,0,1,1],
+[1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,1,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1,0,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1,1,1,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,1,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,1,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,0,1,0,1,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1],
+[1,0,1,1,1,1,1,1,0,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,0,1,1],
+[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1],
+[1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1,1],
+[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1],
+[1,0,1,1,1,1,1,0,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+const MAP_W = map[0].length, MAP_H = map.length;
+
+// Enemies
+let enemiesTemplate = [
+    {x:9.5, y:1.5, alive:true, health:100, shootCooldown:0, state:"idle", dir:Math.random()*Math.PI*2, stateTimer:0},
+    {x:4.5, y:7.5, alive:true, health:100, shootCooldown:0, state:"idle", dir:Math.random()*Math.PI*2, stateTimer:0},
+    {x:10.5, y:5.5, alive:true, health:100, shootCooldown:0, state:"idle", dir:Math.random()*Math.PI*2, stateTimer:0},
+    {x:18.5, y:2.5, alive:true, health:100, shootCooldown:0, state:"idle", dir:Math.random()*Math.PI*2, stateTimer:0},
+    {x:22.5, y:12.5, alive:true, health:100, shootCooldown:0, state:"idle", dir:Math.random()*Math.PI*2, stateTimer:0},
+    {x:5.5, y:16.5, alive:true, health:100, shootCooldown:0, state:"idle", dir:Math.random()*Math.PI*2, stateTimer:0},
+    {x:14.5, y:17.5, alive:true, health:100, shootCooldown:0, state:"idle", dir:Math.random()*Math.PI*2, stateTimer:0},
+    {x:25.5, y:8.5, alive:true, health:100, shootCooldown:0, state:"idle", dir:Math.random()*Math.PI*2, stateTimer:0}
+];
+
+// Player
+let player = {x:3.5, y:3.5, angle:0, speed:0.08, health:100};
+
+// Enemy sprite
+const enemySprite = new Image();
+enemySprite.src = "Screenshot 2025-12-11 163803.png";
+let enemyLoaded = false;
+enemySprite.onload = () => enemyLoaded = true;
+
+let enemies = [];
+
+// Bullets
+let bullets = [];
+let enemyBullets = [];
+
+// Items & Car
+let items = [];
+let car = null;
+
+// Initialize 6 objects and car
+function initItemsAndCar() {
+    items = [
+        {x: 2.5, y: 2.5, collected: false},
+        {x: 2.5, y: 3.5, collected: false},
+        {x: 2.5, y: 5.5, collected: false},
+        {x: 2.5, y: 6.5, collected: false},
+        {x: 2.5, y: 7.5, collected: false},
+        {x: 2.5, y: 8.5, collected: false}
+    ];
+    car = {x: 2.5, y: 10.5};
+}
+
+let collectedMessageShown = false;
+
+function collectItems() {
+    let allCollected = true;
+    items.forEach(item => {
+        if(!item.collected){
+            const dist = Math.hypot(player.x - item.x, player.y - item.y);
+            if(dist < 0.5){ 
+                item.collected = true; 
+            }
+        }
+        if(!item.collected) allCollected = false;
+    });
+    
+    // Show message immediately when all items collected
+    if(allCollected && !collectedMessageShown){
+        showTempMessage("All items collected! Head to the car!", 120);
+        collectedMessageShown = true;
+    }
+}
+
+function showTempMessage(msg, duration=120){
+    tempMsg = msg;
+    tempMsgTimer = duration; // duration in frames (~2 sec if 60fps)
+}
+
+let carWarningShown = false;
+
+function checkCarEscape() {
+    const distToCar = Math.hypot(player.x - car.x, player.y - car.y);
+    if(items.every(it => it.collected) && distToCar < 1) { // slightly bigger radius
+        if(!gameWin){
+            gameWin = true;
+            endTimer = 120; // 2 seconds before returning
+        }
+    } else if(distToCar < 1 && !items.every(it => it.collected)) {
+        if(!carWarningShown) {
+            showTempMessage("Collect all items before escaping!", 120);
+            carWarningShown = true;
+        }
+    } else {
+        carWarningShown = false; // reset if player moves away
+    }
+}
+
+function drawItemsAndCar() {
+    const scale = 15, offsetX = canvas.width - MAP_W*scale - 20, offsetY = canvas.height - MAP_H*scale - 20;
+    
+    items.forEach(item => {
+        if(!item.collected){
+            ctx.fillStyle = "yellow";
+            ctx.fillRect(offsetX + item.x*scale - 3, offsetY + item.y*scale - 3, 6, 6);
+        }
+    });
+    
+    if(car){
+        ctx.fillStyle = "cyan";
+        ctx.fillRect(offsetX + car.x*scale - 3, offsetY + car.y*scale - 3, 6, 6);
+    }
+}
+
+function drawItemsAndCar3D(){
+    const w = canvas.width, h = canvas.height;
+
+    // Draw items
+    items.forEach(item => {
+    if(item.collected) return;
+    const dx = item.x - player.x;
+    const dy = item.y - player.y;
+    const dist = Math.hypot(dx, dy);
+    if(dist < 0.5 || dist > 60) return; // cull very close/far
+    if(!canSee(player.x, player.y, item.x, item.y)) return; // skip if blocked
+    let angleToItem = Math.atan2(dy, dx) - player.angle;
+    if(angleToItem > Math.PI) angleToItem -= 2*Math.PI;
+    if(angleToItem < -Math.PI) angleToItem += 2*Math.PI;
+    if(Math.abs(angleToItem) < Math.PI/2){
+        const size = Math.max(4, Math.min(20, (h/dist)*0.2));
+        const screenX = w/2 + Math.tan(angleToItem) * w/2;
+        ctx.fillStyle = "yellow";
+        ctx.fillRect(screenX - size/2, h/2 - size/2, size, size);
+    }
+});
+
+    // Draw car
+    if(car){
+        const dx = car.x - player.x;
+        const dy = car.y - player.y;
+        const dist = Math.hypot(dx, dy);
+        if(dist > 0.5 && dist < 60){
+            let angleToCar = Math.atan2(dy, dx) - player.angle;
+            if(angleToCar > Math.PI) angleToCar -= 2*Math.PI;
+            if(angleToCar < -Math.PI) angleToCar += 2*Math.PI;
+            if(Math.abs(angleToCar) < Math.PI/2){
+                const size = Math.max(6, Math.min(28, (h/dist)*0.3));
+                const screenX = w/2 + Math.tan(angleToCar) * w/2;
+                ctx.fillStyle = "cyan";
+                ctx.fillRect(screenX - size/2, h/2 - size/2, size, size);
+            }
+        }
+    }
+}
+
+
+// Wall textures
+function makeTexture(c1,c2){
+    let cnv=document.createElement("canvas"); cnv.width=cnv.height=32;
+    let cctx=cnv.getContext("2d");
+    cctx.fillStyle=c1; cctx.fillRect(0,0,32,32);
+    cctx.strokeStyle=c2; cctx.lineWidth=4;
+    for(let x=0;x<32;x+=8){ cctx.beginPath(); cctx.moveTo(x,0); cctx.lineTo(32,32-x); cctx.stroke(); }
+    return ctx.createPattern(cnv,"repeat");
+}
+const wallTextures = [makeTexture("#334","#556"),makeTexture("#552","#aa4"),makeTexture("#400","#a00")];
+
+// Raycasting
+function castRays(){
+    const w=canvas.width,h=canvas.height;
+    ctx.fillStyle="#222244"; ctx.fillRect(0,0,w,h/2);
+    ctx.fillStyle="#111"; ctx.fillRect(0,h/2,w,h/2);
+    const fov=Math.PI/3, step=fov/w;
+    for(let i=0;i<w;i++){
+        const angle = player.angle - fov/2 + step*i;
+        let dist=0, hit=false, cellValue=1;
+        while(!hit && dist<20){
+            dist+=0.02;
+            let rx=player.x + Math.cos(angle)*dist;
+            let ry=player.y + Math.sin(angle)*dist;
+            let mx=Math.floor(rx), my=Math.floor(ry);
+            if(mx<0||my<0||mx>=MAP_W||my>=MAP_H){hit=true;cellValue=1;break;}
+            cellValue = map[my][mx]; if(cellValue!==0) hit=true;
+        }
+        let wallH=Math.min(h,600/dist); if(!isFinite(wallH)) wallH=h;
+        let texture=wallTextures[cellValue%wallTextures.length];
+        ctx.fillStyle=texture; ctx.fillRect(i,(h-wallH)/2,1,wallH);
+        ctx.fillStyle=`rgba(0,0,0,${dist/12})`; ctx.fillRect(i,(h-wallH)/2,1,wallH);
+    }
+}
+
+// Check line-of-sight
+function canSee(px,py,ex,ey){
+    let dx=ex-px, dy=ey-py;
+    let steps=Math.max(Math.abs(dx*10),Math.abs(dy*10),1)*10;
+    for(let i=0;i<steps;i++){
+        let t=i/steps,x=px+dx*t,y=py+dy*t,mx=Math.floor(x),my=Math.floor(y);
+        if(mx<0||my<0||mx>=MAP_W||my>=MAP_H) return false;
+        if(map[my][mx]===1) return false;
+    }
+    return true;
+}
+
+// Draw enemies and handle AI shooting
+function drawEnemies(){
+    const w=canvas.width,h=canvas.height;
+    enemies.forEach(e=>{
+        if(!e.alive) return;
+        let dx=e.x-player.x, dy=e.y-player.y, dist=Math.hypot(dx,dy);
+        // melee damage if too close
+        if(dist<0.8){player.health-=0.3; if(player.health<0) player.health=0;}
+        
+	// -------- AI STATE LOGIC --------
+
+// Aggro if player visible
+if(canSee(e.x, e.y, player.x, player.y)){
+    e.state = "chase";
+    e.stateTimer = 120; // stay aggressive for 2s after losing sight
+} else if(e.stateTimer > 0){
+    e.stateTimer--;
+} else {
+    e.state = "idle";
+}
+
+if(e.state === "idle"){
+    const step = 0.015;
+
+    // Occasionally change direction
+    if(Math.random() < 0.01){
+        e.dir = Math.random() * Math.PI * 2;
+    }
+
+    const nx = e.x + Math.cos(e.dir) * step;
+    const ny = e.y + Math.sin(e.dir) * step;
+
+    if(mxValid(nx, ny) && map[Math.floor(ny)][Math.floor(nx)] === 0){
+        e.x = nx;
+        e.y = ny;
+    } else {
+        // bounce off walls
+        e.dir += Math.PI / 2;
+    }
+}
+
+if(e.state === "chase"){
+    const step = 0.03;
+    const nx = e.x - (dx / dist) * step;
+    const ny = e.y - (dy / dist) * step;
+
+    if(mxValid(nx, ny) && map[Math.floor(ny)][Math.floor(nx)] === 0){
+        e.x = nx;
+        e.y = ny;
+    }
+}
+
+        // only proceed if enemy can see player
+        if(!canSee(e.x,e.y,player.x,player.y)) {
+            // decrement cooldown even when player not visible
+            if(e.shootCooldown && e.shootCooldown>0) e.shootCooldown--;
+            return;
+        }
+        let angleToPlayer=Math.atan2(player.y - e.y, player.x - e.x) - eAngle(e);
+        // normalize angle between -PI..PI
+        while(angleToPlayer > Math.PI) angleToPlayer -= 2*Math.PI;
+        while(angleToPlayer < -Math.PI) angleToPlayer += 2*Math.PI;
+
+        // choose to shoot if roughly facing player (within 90 degrees)
+        if(Math.abs(angleToPlayer) < Math.PI/2){
+            // shooting cooldown
+            if(!e.shootCooldown || e.shootCooldown <= 0){
+                enemyShoot(e);
+                e.shootCooldown = 60; // 60 frames between enemy shots (~1s)
+            } else {
+                e.shootCooldown--;
+            }
+        } else {
+            if(e.shootCooldown && e.shootCooldown>0) e.shootCooldown--;
+        }
+
+        // compute angle relative to player for rendering
+        let angleToEnemy = Math.atan2(dy,dx) - player.angle;
+        if(angleToEnemy>Math.PI) angleToEnemy -= 2*Math.PI;
+        if(angleToEnemy<-Math.PI) angleToEnemy += 2*Math.PI;
+
+        if(Math.abs(angleToEnemy)<Math.PI/2){
+            const enemyHeightUnits=0.9;
+            const size=Math.max(12,(h/Math.max(dist,0.5))*enemyHeightUnits);
+            const screenX=w/2+Math.tan(angleToEnemy)*w/2;
+            if(enemyLoaded){
+                ctx.drawImage(enemySprite,screenX-size/2,h/2-size,size,size*2);
+            } else {
+                ctx.fillStyle="red";
+                ctx.fillRect(screenX-size/4,h/2-size,size/2,size*2);
+            }
+            // health bar
+            const hbW=size,hbX=screenX-hbW/2,hbY=h/2-size-16;
+            ctx.fillStyle="black"; ctx.fillRect(hbX-1,hbY-1,hbW+2,12);
+            ctx.fillStyle="lime"; ctx.fillRect(hbX,hbY,hbW*Math.max(0,e.health/100),10);
+            if(e.health<=30){ctx.fillStyle="rgba(255,0,0,0.15)";ctx.fillRect(screenX-size/2,h/2-size,size,size*2);}
+        }
+    });
+}
+
+// helper to compute enemy facing angle (face toward player by design)
+function eAngle(e){
+    // simple facing direction toward player (so enemies aim at player)
+    return Math.atan2(player.y - e.y, player.x - e.x);
+}
+
+// Enemy shooting: spawn enemy bullet aimed at player
+function enemyShoot(e) {
+    try { enemyGunSound.currentTime = 0; enemyGunSound.play().catch(()=>{}); } catch(err){}
+    const dx = player.x - e.x;
+    const dy = player.y - e.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    const speed = 0.15;
+    const vx = dx / dist * speed;
+    const vy = dy / dist * speed;
+    enemyBullets.push({ x: e.x, y: e.y, vx, vy, life: 90 });
+}
+
+// Player shooting (spawn a bullet)
+function shootEnemies(){
+    // player firing sound handled by hold/release; ensure sound playing if shooting
+    if(shootSound.paused) shootSound.play().catch(()=>{});
+    const b = { x: player.x + Math.cos(player.angle) * 0.2, y: player.y + Math.sin(player.angle) * 0.2, angle: player.angle, speed: 0.28, life: 90 };
+    bullets.push(b);
+}
+
+// Update player bullets (move, hit walls, hit enemies)
+function updateBullets(){
+    bullets.forEach(b=>{
+        if(b.life<=0) return;
+        b.x += Math.cos(b.angle) * b.speed;
+        b.y += Math.sin(b.angle) * b.speed;
+        b.life--;
+        const mx=Math.floor(b.x), my=Math.floor(b.y);
+        if(mx<0||my<0||mx>=MAP_W||my>=MAP_H || map[my][mx]===1){ b.life = 0; return; }
+        enemies.forEach(e=>{
+            if(!e.alive) return;
+            const d = Math.hypot(e.x - b.x, e.y - b.y);
+            if(d < 0.45){
+                e.health -= 34;
+                b.life = 0;
+                if(e.health <= 0) e.alive = false;
+            }
+        });
+    });
+    bullets = bullets.filter(b => b.life > 0);
+}
+
+// Draw player bullets projected into view
+function drawBullets(){
+    const w = canvas.width, h = canvas.height;
+    bullets.forEach(b=>{
+        let dx = b.x - player.x, dy = b.y - player.y;
+        let dist = Math.hypot(dx, dy);
+        if(dist < 0.4 || dist > 60) return;
+        let angleToBullet = Math.atan2(dy, dx) - player.angle;
+        if(angleToBullet > Math.PI) angleToBullet -= 2*Math.PI;
+        if(angleToBullet < -Math.PI) angleToBullet += 2*Math.PI;
+        if(Math.abs(angleToBullet) < Math.PI/2){
+            let size = (h / Math.max(dist,0.1)) * 0.04;
+            size = Math.min(12, Math.max(2, size));
+            const screenX = w/2 + Math.tan(angleToBullet) * w/2;
+            ctx.fillStyle = "yellow";
+            ctx.fillRect(screenX - 2, h/2 - size/2, 4, 4 + size*0.6);
+        }
+    });
+}
+
+// Update enemy bullets (move, collision, damage player)
+function updateEnemyBullets(){
+    enemyBullets.forEach(b=>{
+        if(b.life<=0) return;
+        b.x += b.vx; b.y += b.vy; b.life--;
+        const mx = Math.floor(b.x), my = Math.floor(b.y);
+        if(mx<0||my<0||mx>=MAP_W||my>=MAP_H || map[my][mx] === 1){ b.life = 0; return; }
+        const dx = b.x - player.x, dy = b.y - player.y;
+        const sq = dx*dx + dy*dy;
+        if(sq < 0.16){ // hit player (radius ~0.4)
+            player.health -= 12; // enemy bullet damage (tweakable)
+            b.life = 0;
+            if(player.health < 0) player.health = 0;
+        }
+    });
+    enemyBullets = enemyBullets.filter(b => b.life > 0);
+}
+
+// Draw enemy bullets projected into view
+function drawEnemyBullets(){
+    const w = canvas.width, h = canvas.height;
+    enemyBullets.forEach(b=>{
+        let dx = b.x - player.x, dy = b.y - player.y;
+        let dist = Math.hypot(dx, dy);
+        if(dist < 0.3 || dist > 60) return;
+        let angleToBullet = Math.atan2(dy, dx) - player.angle;
+        if(angleToBullet > Math.PI) angleToBullet -= 2*Math.PI;
+        if(angleToBullet < -Math.PI) angleToBullet += 2*Math.PI;
+        if(Math.abs(angleToBullet) < Math.PI/2){
+            let size = (h / Math.max(dist,0.1)) * 0.04;
+            size = Math.min(12, Math.max(2, size));
+            const screenX = w/2 + Math.tan(angleToBullet) * w/2;
+            ctx.fillStyle = "orange";
+            ctx.fillRect(screenX - 2, h/2 - size/2, 4, 4 + size*0.6);
+        }
+    });
+}
+
+// Movement
+function movePlayer(){
+    if(keys["ArrowLeft"]) player.angle -= 0.05;
+    if(keys["ArrowRight"]) player.angle += 0.05;
+    player.angle += mouseDelta * 0.002; mouseDelta = 0;
+    let sin = Math.sin(player.angle), cos = Math.cos(player.angle);
+    if(keys["ArrowUp"]){
+        let nx = player.x + cos * player.speed, ny = player.y + sin * player.speed;
+        if(mxValid(nx, ny) && map[Math.floor(ny)][Math.floor(nx)] !== 1) { player.x = nx; player.y = ny; }
+    }
+    if(keys["ArrowDown"]){
+        let nx = player.x - cos * player.speed, ny = player.y - sin * player.speed;
+        if(mxValid(nx, ny) && map[Math.floor(ny)][Math.floor(nx)] !== 1) { player.x = nx; player.y = ny; }
+    }
+}
+
+// helper
+function mxValid(x,y){ const mx=Math.floor(x), my=Math.floor(y); return !(mx<0||my<0||mx>=MAP_W||my>=MAP_H); }
+
+// Gun drawing
+function drawGun(){
+    const w=canvas.width,h=canvas.height;
+    ctx.fillStyle="#444"; ctx.fillRect(w/2-40,h-150,80,150);
+    ctx.fillStyle="#999"; ctx.fillRect(w/2-10,h-200,20,50);
+    ctx.fillStyle="#000"; ctx.fillRect(w/2-6,h-195,12,20);
+    if(shooting){ ctx.fillStyle="yellow"; ctx.fillRect(w/2-5,h-205,10,15); }
+}
+
+// Mini-map
+function drawMiniMap(){
+    const scale=15, offsetX=canvas.width-MAP_W*scale-20, offsetY=canvas.height-MAP_H*scale-20;
+    ctx.fillStyle="rgba(0,0,0,0.5)"; ctx.fillRect(offsetX-2, offsetY-2, MAP_W*scale+4, MAP_H*scale+4);
+    for(let y=0;y<MAP_H;y++){
+        for(let x=0;x<MAP_W;x++){
+            ctx.fillStyle = map[y][x]===1 ? "#888" : "rgba(0,0,0,0)";
+            ctx.fillRect(offsetX + x*scale, offsetY + y*scale, scale, scale);
+        }
+    }
+    enemies.forEach(e => { if(e.alive){ ctx.fillStyle="red"; ctx.fillRect(offsetX + e.x*scale-2, offsetY + e.y*scale-2, 4,4); } });
+    // draw enemy bullets tiny
+    enemyBullets.forEach(b => {
+        ctx.fillStyle = "orange";
+        ctx.fillRect(offsetX + b.x*scale - 1, offsetY + b.y*scale - 1, 2, 2);
+    });
+    // player
+    ctx.fillStyle="cyan"; ctx.fillRect(offsetX + player.x*scale-3, offsetY + player.y*scale-3,6,6);
+}
+
+// HUD
+function updateHUD(){ 
+    const collected = items.filter(it => it.collected).length;
+    const total = items.length;
+    hud.innerText = `Items: ${collected}/${total} | Health: ${Math.max(0, Math.round(player.health))}`; 
+}
+
+// End overlay
+function checkEndConditions() {
+    if(player.health <= 0 && !gameOver && !gameWin) { 
+        gameOver = true; 
+        endTimer = 120; 
+    }
+
+    // Win only if all items collected and player reaches car
+    collectItems();       // mark collected items
+    checkCarEscape();     // check if all items collected and player near car
+}
+
+function drawEndOverlay(){
+    if(!gameOver && !gameWin) return;
+    const w=canvas.width,h=canvas.height;
+    ctx.save(); ctx.textAlign="center";
+    if(gameOver){
+        ctx.fillStyle="rgba(0,0,0,0.6)"; ctx.fillRect(w/2-300,h/2-80,600,160);
+        ctx.fillStyle="red"; ctx.font="72px Consolas"; ctx.fillText("GAME OVER", w/2, h/2-10);
+        ctx.font="20px Consolas"; ctx.fillStyle="#f88"; ctx.fillText("Returning to menu...", w/2, h/2+36);
+    }
+    if(gameWin){
+        ctx.fillStyle="rgba(0,0,0,0.6)"; ctx.fillRect(w/2-300,h/2-80,600,160);
+        ctx.fillStyle="lime"; ctx.font="72px Consolas"; ctx.fillText("CONGRATS!", w/2, h/2-10);
+        ctx.font="20px Consolas"; ctx.fillStyle="#bdf"; ctx.fillText("All items collected! Returning to menu...", w/2, h/2+36);
+    }
+    ctx.restore();
+    endTimer--; if(endTimer<=0) resetToMenu();
+}
+
+// Reset / init
+function resetToMenu(){
+    try{ bgMusic.pause(); bgMusic.currentTime = 0; }catch(e){}
+    gameStarted=false; gameOver=false; gameWin=false; endTimer=0;
+    bullets=[]; enemyBullets=[];
+    enemies = JSON.parse(JSON.stringify(enemiesTemplate));
+    player = { x:3.5, y:3.5, angle:0, speed:0.08, health:100 };
+    hud.innerText=""; startMenu.style.display="flex"; msg.style.display="block";
+    if(document.pointerLockElement===canvas) document.exitPointerLock?.();
+}
+function initGame(){
+    enemies = JSON.parse(JSON.stringify(enemiesTemplate));
+    bullets = []; enemyBullets = [];
+    player = { x:3.5, y:3.5, angle:0, speed:0.08, health:100 };
+    gameOver=false; gameWin=false; endTimer=0;
+}
+
+// Main loop
+function loop(){
+    requestAnimationFrame(loop);
+    if(!gameStarted) return;
+    if(!gameOver && !gameWin){
+        movePlayer();
+        if(fireCooldown>0) fireCooldown--;
+        if(shooting && fireCooldown<=0){
+            shootEnemies();
+            fireCooldown = 10; // player fire rate; tweak if you want faster/slower
+        }
+        updateBullets();
+        updateEnemyBullets();
+    }
+    castRays();
+    drawEnemies();
+    drawBullets();
+    drawEnemyBullets();
+    drawGun();
+    drawMiniMap();
+    drawItemsAndCar(); // draw collectibles and car 
+    drawItemsAndCar3D(); // draw collectibles and car
+    updateHUD();
+    checkEndConditions();
+    drawEndOverlay();
+
+    if(tempMsgTimer > 0){
+    const w = canvas.width, h = canvas.height;
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.font = "32px Consolas";
+    ctx.fillStyle = "#0ff";
+    ctx.shadowColor = "#000";
+    ctx.shadowBlur = 10;
+    ctx.fillText(tempMsg, w/2, h/2);
+    ctx.restore();
+    tempMsgTimer--;
+    }
+
+}
+loop();
+
+// Pause music if leaving page
+document.addEventListener("visibilitychange", ()=>{ if(document.hidden) bgMusic.pause(); else if(gameStarted && !gameOver && !gameWin) bgMusic.play().catch(()=>{}); });
+
+// ESC fallback
+document.addEventListener("keydown",(e)=>{ if(e.key==="Escape" && !gameStarted){ resetToMenu(); } });
+</script>
+</body>
+</html>
+
+Heres the plan, I will be modying the enemies here "C:\Users\anthp\OneDrive\Desktop\Connect4\copilot_image_1766009412260.jpeg" THis is the revolver enemy he moves around and fires at will once he sees the player and chases him. "C:\Users\anthp\OneDrive\Desktop\Connect4\copilot_image_1766009643966.jpeg" THis is the big turrent guy, basically he doesn't move at all but fires at a real rapid pase, he only fires though once he sees the player. "C:\Users\anthp\OneDrive\Desktop\Connect4\copilot_image_1766008655046.jpeg" THis is the tommy gun enemy, he moves slowly and when he fires, he stands still "C:\Users\anthp\OneDrive\Desktop\Connect4\copilot_image_1766009225786.jpeg" This is the shot gun guy, moves around similarly like the revolver enemies, but fires at a much slower pase.

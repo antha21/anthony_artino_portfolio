@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>The Space Escape 3D</title>
+<style>
+body { margin:0; overflow:hidden; background:#000; }
+canvas { display:block; }
+#hud { position:absolute; top:10px; left:10px; color:#7df9ff; font-family:Consolas; font-size:20px; z-index:10; }
+#msg { position:absolute; top:20px; left:20px; color:#7df9ff; font-family:Consolas; font-size:22px; z-index:9; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud"></div>
+
+<!-- Title Screen -->
+<div id="titleScreen">
+    <h1>The Space Escape 3D</h1>
+    <div class="menu-buttons">
+        <button id="startBtn">START GAME</button>
+        <button id="howToBtn">HOW TO PLAY</button>
+    </div>
+</div>
+
+<!-- How To Play Page -->
+<div id="howToScreen">
+    <h1>HOW TO PLAY</h1>
+    <div class="instructions">
+	<p2>The Galactic Robot War XI has reached your home planet. Defeat all enemies and find the key to your space ship to escape! Collect health and ammo pickups to survive.</p2>
+        <p>The arrow keys → Move / Look Around</p>
+	<p>A/D → Strafing</p>
+        <p>Spacebar → Fire your weapon</p>
+        <p1>P → Pause Game</p1>
+    </div>
+    <button id="backBtn">BACK TO MENU</button>
+</div>
+
+<style>
+/* Title & How-To Screens */
+#titleScreen, #howToScreen {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: 
+        linear-gradient(to bottom, rgba(0,0,16,0.6), rgba(0,0,51,0.8)),
+        url("file:///C:/Users/anthp/OneDrive/Desktop/Connect4/SpaceB.jpg") no-repeat center center;
+    background-size: cover;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #7df9ff;
+    font-family: 'Consolas', monospace;
+    z-index: 20;
+    transition: all 0.3s ease;
+}
+
+
+/* Main Title */
+#titleScreen h1, #howToScreen h1 {
+    font-size: 60px;
+    margin-bottom: 40px;
+    text-shadow: 0 0 20px #7df9ff, 0 0 40px #00ffff;
+}
+
+#howToScreen {
+    display: none; /* hide by default */
+}
+
+/* Buttons Container */
+.menu-buttons {
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+    align-items:center;
+}
+
+/* Buttons */
+#titleScreen button, #howToScreen button {
+    font-size: 28px;
+    padding: 12px 40px;
+    background: #111;
+    border: 2px solid #7df9ff;
+    color: #7df9ff;
+    cursor: pointer;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 10px #00ffff44;
+    transition: all 0.2s ease;
+}
+
+/* Hover effect */
+#titleScreen button:hover, #howToScreen button:hover {
+    background: #222;
+    box-shadow: 0 0 20px #00ffffaa;
+}
+
+/* Instructions Box */
+.instructions {
+    font-size: 22px;
+    max-width: 600px;
+    text-align: center;
+    line-height: 1.8;
+    margin-bottom: 40px;
+    text-shadow: 0 0 10px #7df9ff;
+}
+
+</style>
+
+<script>
+// ================= ASSETS =================
+const imgHealth = new Image();
+imgHealth.src = "file:///C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot 2025-12-14 235346.png";
+
+const imgAmmo = new Image();
+imgAmmo.src = "file:///C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot 2025-12-14 235612.png";
+
+// Enemy (normal robot)
+const imgEnemy = new Image();
+imgEnemy.src = "file:///C:/Users/anthp/OneDrive/Desktop/Connect4/Robot Guard.jpeg";
+
+// Mini Boss
+const imgBoss = new Image();
+imgBoss.src = "file:///C:/Users/anthp/OneDrive/Desktop/Connect4/Robot Boss.jpeg";
+
+const imgShip = new Image();
+imgShip.src = "file:///C:/Users/anthp/OneDrive/Desktop/Connect4/spaceship.jpg";
+
+const imgKey = new Image();
+imgKey.src = "file:///C:/Users/anthp/OneDrive/Desktop/Connect4/car keys.jpg";
+
+
+const bgMusic = new Audio("file:///C:/Users/anthp/OneDrive/Desktop/Connect4/ytmp3free.cc_ratchet-clank-3-up-your-arsenal-mylon-command-center-youtubemp3free.org.mp3");
+bgMusic.loop = true;
+
+const FORCE_VISIBLE_DIST = 0.8; // tiles; tweak 0.6–1.0
+
+const titleScreen = document.getElementById("titleScreen");
+const startBtn = document.getElementById("startBtn");
+
+// Flag to control when the game loop starts
+let gameStarted = false;
+let paused = false;
+
+startBtn.onclick = () => {
+    titleScreen.style.display = "none"; // Hide the title screen
+    gameStarted = true;                  // Set game as started
+    const msg = document.getElementById("msg");
+    if(msg) msg.innerText = "CLICK TO LOCK MOUSE";
+
+    // Play background music
+    bgMusic.play().catch(e => console.log("Autoplay blocked:", e));
+};
+
+// ================= SOUND EFFECTS =================
+const playerGunSound = new Audio("file:///C:/Users/anthp/OneDrive/Desktop/Connect4/Desertgun.mp3");
+playerGunSound.volume = 0.6;
+
+const enemyGunSound = new Audio("file:///C:/Users/anthp/OneDrive/Desktop/Connect4/RifleSound.mp3");
+enemyGunSound.volume = 0.25;
+
+const ammoPickupSound = new Audio(
+    "file:///C:/Users/anthp/OneDrive/Desktop/Connect4/ytmp3free.cc_picking-up-an-object-sound-effect-block-city-wars-youtubemp3free.org.mp3"
+);
+ammoPickupSound.volume = 0.55;
+
+const healthPickupSound = new Audio(
+    "file:///C:/Users/anthp/OneDrive/Desktop/Connect4/ytmp3free.cc_garrys-mod-health-vial-sound-effect-youtubemp3free.org.mp3"
+);
+healthPickupSound.volume = 0.6;
+
+const enemyHitSound = new Audio(
+    "file:///C:/Users/anthp/OneDrive/Desktop/Connect4/MetalHit.mp3"
+);
+enemyHitSound.volume = 0.5;
+
+const enemyDeathSound = new Audio(
+    "file:///C:/Users/anthp/OneDrive/Desktop/Connect4/RobotDeath.mp3"
+);
+enemyDeathSound.volume = 0.90;
+
+const enemyExplosionSound = new Audio(
+    "file:///C:/Users/anthp/OneDrive/Desktop/Connect4/RobotExplosion.mp3"
+);
+enemyExplosionSound.volume = 0.65;
+
+const miniBossGunSound = new Audio("file:///C:/Users/anthp/OneDrive/Desktop/Connect4/TurrentGun.mp3");
+miniBossGunSound.preload = "auto";
+miniBossGunSound.loop = true;
+miniBossGunSound.volume = 0.85;
+
+const keyPickupSound = new Audio("file:///C:/Users/anthp/OneDrive/Desktop/Connect4/Car Keys.mp3");
+keyPickupSound.volume = 0.75;
+
+const spaceshipEngineSound = new Audio("file:///C:/Users/anthp/OneDrive/Desktop/Connect4/Spaceship engine start up I Sound Effect (HQ) (3).mp3");
+spaceshipEngineSound.volume = 0.7; // adjust volume if needed
+
+
+</script>
+
+
+<script>
+const howToScreen = document.getElementById("howToScreen");
+const howToBtn = document.getElementById("howToBtn");
+const backBtn = document.getElementById("backBtn");
+
+// Show How To Play
+howToBtn.onclick = () => {
+    titleScreen.style.display = "none";
+    howToScreen.style.display = "flex";
+};
+
+// Back to Main Menu
+backBtn.onclick = () => {
+    howToScreen.style.display = "none";
+    titleScreen.style.display = "flex";
+};
+
+
+
+/* ================= MAP ================= */
+const map = [
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,1,0,1,0,1,0,0,0,1,0,1,0,0,0,0,1,1,1,1,1,1,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
+[1,0,1,1,1,1,1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,0,0,1],
+[1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,1,0,1,0,0,0,1],
+[1,0,1,1,1,0,0,0,1,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1],
+[1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1],
+[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+const MAP_W = map[0].length, MAP_H = map.length;
+
+/* ================= PLAYER ================= */
+let player = {
+    x:3.5,
+    y:3.5,
+    angle:0,
+    speed:0.06,
+    health:100,
+    ammo:8,
+    maxAmmo:10
+};
+
+/* ================= ENEMIES ================= */
+let enemiesTemplate = [
+    {x:9.5, y:1.5, alive:true, health:100, shootCooldown:0, dir:0},
+    {x:4.5, y:7.5, alive:true, health:100, shootCooldown:0, dir:0},
+    {x:10.5, y:5.5, alive:true, health:100, shootCooldown:0, dir:0},
+    {x:14.5, y:2.5, alive:true, health:100, shootCooldown:0, dir:0}, // new enemy
+    {x:12.5, y:7.5, alive:true, health:100, shootCooldown:0, dir:0}, // new enemy
+    {x:3.5, y:8.5, alive:true, health:100, shootCooldown:0, dir:0}   // new enemy
+];
+let enemies = enemiesTemplate.map(e => ({...e}));
+
+/* ================= MINI BOSS ================= */
+const boss = {
+    // position
+    x: 21.5,        // starting X (center of tile)
+    y: 8.5,         // starting Y (center of tile)
+    homeX: 21.5,
+    homeY: 8.5,
+
+    // health
+    alive: true,
+    health: 200,
+    maxHealth: 200,
+
+    // movement
+    dir: 1,         // 1 = right, -1 = left
+    speed: 0.02,    // movement speed per frame
+    patrolMinX: 20.5,   // leftmost X
+    patrolMaxX: 22.0,   // rightmost X
+
+    // shooting / other
+    shootCooldown: 0,
+    dirAngle: 0,
+    fireRate: 0,
+    isFiring: false
+};
+
+/* ================= Space Ship ================= */
+const spaceship = {
+    x: 22,   // column of the '8' in your map
+    y: 1,    // row of the '8' in your map
+    unlocked: false
+};
+
+/* ================= KEY ================= */
+const bossKey = {
+    x: null,
+    y: null,
+    collected: false,
+    dropped: false
+};
+
+
+
+/* ================= HEALTH PICKUPS ================= */
+let healthPickups = [
+    {x:2.5, y:1.5, taken:false},
+    {x:11.5, y:2.5, taken:false},
+    {x:6.5, y:6.5, taken:false},
+    {x:15.5, y:1.5, taken:false}, // new pickup
+    {x:13.5, y:5.5, taken:false}, // new pickup
+    {x:5.5, y:8.5, taken:false}   // new pickup
+];
+
+let ammoPickups = [];
+
+/* ================= CANVAS ================= */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+resize(); window.addEventListener("resize", resize);
+const hud = document.getElementById("hud");
+const msg = document.getElementById("msg");
+
+/* ================= INPUT ================= */
+let keys = {}, mouseDX = 0, fireCooldown = 0;
+let bullets = [], enemyBullets = [];
+document.addEventListener("keydown", e => {
+    keys[e.key] = true;
+    if (
+        e.code === "Space" &&
+        fireCooldown <= 0 &&
+        player.ammo > 0
+    ){
+        shoot();
+        fireCooldown = 20;
+        player.ammo--;
+    }
+});
+
+document.addEventListener("keyup", e => keys[e.key]=false);
+document.addEventListener("mousemove", e => { if(document.pointerLockElement===canvas) mouseDX=e.movementX; });
+canvas.onclick = ()=> canvas.requestPointerLock();
+
+document.addEventListener("keydown", e => {
+    if (e.key === "p" || e.key === "P") {
+        paused = !paused;
+        msg.innerText = paused ? "PAUSED" : "";
+    }
+
+    // Existing shooting code
+    if (
+        e.code === "Space" &&
+        fireCooldown <= 0 &&
+        player.ammo > 0 &&
+        !paused  // prevent shooting while paused
+    ){
+        shoot();
+        fireCooldown = 20;
+        player.ammo--;
+    }
+
+    keys[e.key] = true;
+});
+
+/* ================= SHOOT ================= */
+function shoot(){
+    bullets.push({
+        x: player.x + Math.cos(player.angle) * 0.3,
+        y: player.y + Math.sin(player.angle) * 0.3,
+        a: player.angle,
+        life: 80
+    });
+
+    // Play gun sound (restart instantly if spammed)
+    playerGunSound.currentTime = 0;
+    playerGunSound.play();
+    if(paused) return;
+
+}
+
+function isWall(x, y){
+    let tx = Math.floor(x);
+    let ty = Math.floor(y);
+
+    return map[ty] && map[ty][tx] !== 0; // true if wall
+}
+
+
+
+
+/* ================= UPDATE BULLETS ================= */
+function updateBullets(){
+    bullets.forEach(b => {
+        // Move bullet
+        let nextX = b.x + Math.cos(b.a) * 0.25;
+let nextY = b.y + Math.sin(b.a) * 0.25;
+
+// Check wall collision
+if(isWall(nextX, nextY)){
+    b.life = 0; // bullet is "dead"
+} else {
+    b.x = nextX;
+    b.y = nextY;
+    b.life--;
+}
+
+// Only continue collision checks if bullet is still alive
+if(b.life <= 0) return;
+
+// === Hit enemies / boss ===
+
+
+
+        /* ===== HIT NORMAL ENEMIES ===== */
+        enemies.forEach(e => {
+            if(!e.alive || b.life <= 0) return;
+
+            let dx = e.x - b.x;
+            let dy = e.y - b.y;
+
+            if(Math.hypot(dx, dy) < 0.3){
+                b.life = 0;
+
+                enemyHitSound.currentTime = 0;
+                enemyHitSound.play();
+
+                e.health -= 50;
+	    
+                if(e.health <= 0 && !e.droppedAmmo){
+    e.alive = false;
+    e.droppedAmmo = true;  // mark that ammo has been dropped
+
+    enemyDeathSound.currentTime = 0;
+    enemyDeathSound.play();
+
+    enemyExplosionSound.currentTime = 0;
+    enemyExplosionSound.play();
+
+    ammoPickups.push({ x: e.x, y: e.y, taken:false });
+}
+            }
+        });
+
+        /* ===== HIT BOSS (SEPARATE) ===== */
+        if(boss.alive && b.life > 0){
+            let dx = boss.x - b.x;
+            let dy = boss.y - b.y;
+
+            if(Math.hypot(dx, dy) < 0.4){
+                b.life = 0;
+
+                enemyHitSound.currentTime = 0;
+                enemyHitSound.play();
+
+                boss.health -= 25;
+
+                if(boss.health <= 0){
+                    boss.alive = false;
+
+                    enemyDeathSound.currentTime = 0;
+                    enemyDeathSound.play();
+
+                    enemyExplosionSound.currentTime = 0;
+                    enemyExplosionSound.play();
+			
+		    // DROP KEY
+   		    bossKey.x = boss.x;
+                    bossKey.y = boss.y;
+                    bossKey.dropped = true;
+                }
+            }
+        }
+    });
+
+    // Remove dead bullets
+    bullets = bullets.filter(b => b.life > 0);
+
+
+    /* ===== ENEMY BULLETS → PLAYER ===== */
+    enemyBullets.forEach(b => {
+        b.life--;
+
+        let dx = player.x - b.x;
+        let dy = player.y - b.y;
+
+        if(Math.hypot(dx, dy) < 0.3){
+            player.health -= 10;
+            b.life = 0;
+            if(player.health <= 0) resetGame();
+        }
+    });
+
+    enemyBullets = enemyBullets.filter(b => b.life > 0);
+}
+
+
+/* ================= UPDATE ENEMIES ================= */
+function updateEnemies(){
+    if(!gameStarted) return;
+    enemies.forEach(e=>{
+        if(!e.alive) return;
+        let speed=0.01;
+        let nx = e.x + Math.cos(e.dir) * speed;
+let ny = e.y + Math.sin(e.dir) * speed;
+const buffer = 0.2; // keep a small distance from walls
+if(
+    map[Math.floor(ny)][Math.floor(nx)] === 0 &&
+    map[Math.floor(ny + Math.sign(ny - e.y) * buffer)][Math.floor(nx + Math.sign(nx - e.x) * buffer)] === 0
+){
+    e.x = nx; 
+    e.y = ny;
+} else { 
+    e.dir = Math.random() * Math.PI * 2; 
+}
+
+
+        // Chase player
+        let dx=player.x-e.x, dy=player.y-e.y;
+        if(Math.hypot(dx,dy)<5) e.dir=Math.atan2(dy,dx);
+
+        // Shoot at player
+        if(e.shootCooldown<=0 && Math.hypot(dx,dy)<5){
+            enemyBullets.push({x:e.x, y:e.y, a:Math.atan2(dy,dx), life:80});
+            e.shootCooldown=120;
+	    // Play enemy gun sound
+    enemyGunSound.currentTime = 0;
+    enemyGunSound.play();
+        } else e.shootCooldown--;
+    });
+
+}
+
+/* ================= UPDATE BOSS ================= */
+boss.fireRate = 0;
+boss.fireDelay = 6;   // same feel as player gun
+boss.isFiring = false;
+
+
+function updateBoss(){
+    if(!boss.alive){
+        bossStopGun();
+        return;
+    }
+	
+    if(boss.alive){
+    const speed = 0.02; // adjust as needed
+    boss.x += boss.dir * speed;
+
+    // Reverse direction if hitting patrol boundaries
+    if(boss.x < boss.patrolMinX){
+        boss.x = boss.patrolMinX;
+        boss.dir = 1;
+    } else if(boss.x > boss.patrolMaxX){
+        boss.x = boss.patrolMaxX;
+        boss.dir = -1;
+    }
+
+    // Optional: check collisions with walls
+    const nextTile = map[Math.floor(boss.y)][Math.floor(boss.x)];
+    if(nextTile !== 0){
+        // reverse if wall hit unexpectedly
+        boss.dir *= -1;
+    }
+}
+
+
+    // ===== AIM AT PLAYER =====
+    let dx = player.x - boss.x;
+    let dy = player.y - boss.y;
+    let dist = Math.hypot(dx, dy);
+
+    boss.dirAngle = Math.atan2(dy, dx);
+
+    const wantsToFire = dist < 7;
+
+    // ===== SOUND (HOLD-TO-FIRE STYLE) =====
+    if(wantsToFire){
+        bossStartGun();
+    } else {
+        bossStopGun();
+    }
+
+    // ===== BULLETS =====
+    if(wantsToFire){
+        if(boss.fireRate <= 0){
+            enemyBullets.push({
+                x: boss.x,
+                y: boss.y,
+                a: boss.dirAngle,
+                life: 80
+            });
+            boss.fireRate = 6;
+        } else {
+            boss.fireRate--;
+        }
+    } else {
+        boss.fireRate = 0;
+    }
+}
+
+function bossStartGun(){
+    if(!boss.isFiring){
+        boss.isFiring = true;
+        miniBossGunSound.currentTime = 0;
+        miniBossGunSound.loop = true;
+        miniBossGunSound.play().catch(()=>{});
+    }
+}
+
+function bossStopGun(){
+    if(boss.isFiring){
+        boss.isFiring = false;
+        miniBossGunSound.pause();
+        miniBossGunSound.currentTime = 0;
+    }
+}
+
+
+/* ===== UPDATE KEY ===== */
+function updateKey() {
+    if(!bossKey.dropped || bossKey.collected) return;
+
+    if(Math.hypot(player.x - bossKey.x, player.y - bossKey.y) < 0.7){
+        bossKey.collected = true;
+        spaceship.unlocked = true;
+        showKeyMessage("KEY ACQUIRED – SHIP UNLOCKED", 300); // show for 300 frames (~5s at 60fps)
+
+	// Play pickup sound
+        keyPickupSound.currentTime = 0;
+        keyPickupSound.play().catch(() => {});
+    }
+}
+
+/* ===== SHOW KEY MESSAGE ===== */
+function showKeyMessage(text, duration) {
+    keyMessage = text;
+    messageTimer = duration;
+}
+
+/* ===== DRAW KEY MESSAGE BOX ===== */
+function drawKeyMessage() {
+    if(!keyMessage || messageTimer <= 0) return;
+
+    const padding = 10;
+    const fontSize = 20;
+    const boxWidth = 300;
+    const boxHeight = 60;
+
+    // Enemy counter
+    const aliveEnemies = enemies.filter(e => e.alive).length + (boss.alive ? 1 : 0);
+    const enemyText = aliveEnemies === 0 ? "All enemies defeated!" : `Enemies remaining: ${aliveEnemies}`;
+
+    ctx.save();
+    ctx.font = `${fontSize}px Arial`;
+    ctx.textBaseline = "top";
+
+    // Background box
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(canvas.width - boxWidth - padding, padding, boxWidth, boxHeight);
+
+    // Border
+    ctx.strokeStyle = "yellow";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(canvas.width - boxWidth - padding, padding, boxWidth, boxHeight);
+
+    // Text
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.fillText(keyMessage, canvas.width - boxWidth/2 - padding, padding + 10);
+    ctx.fillText(enemyText, canvas.width - boxWidth/2 - padding, padding + 30);
+
+    ctx.restore();
+
+    messageTimer--;
+}
+
+/* ===== UPDATE SPACESHIP ===== */
+
+function updateSpaceship() {
+    if (Math.floor(player.x) === spaceship.x &&
+        Math.floor(player.y) === spaceship.y) {
+
+        const allEnemiesDefeated = enemies.every(e => !e.alive) && !boss.alive;
+
+        if (!spaceship.unlocked) {
+            showMessage("SHIP LOCKED – FIND THE KEY");
+        } else if (!allEnemiesDefeated) {
+            showMessage("DEFEAT ALL ENEMIES BEFORE ESCAPING!");
+        } else {
+            // ESCAPE SUCCESSFUL
+            // ESCAPE SUCCESSFUL
+showMessage("ESCAPE SUCCESSFUL!", 20000);
+
+// Create a separate message element for the code
+const codeMessage = document.createElement("div");
+codeMessage.textContent = "Code: LYLB";
+codeMessage.style.position = "absolute";
+codeMessage.style.top = "60%"; // adjust to appear below ESCAPE SUCCESSFUL
+codeMessage.style.left = "50%";
+codeMessage.style.transform = "translateX(-50%)";
+codeMessage.style.fontSize = "24px";
+codeMessage.style.color = "yellow";
+codeMessage.style.textAlign = "center";
+codeMessage.style.zIndex = "1000";
+
+// Add to body or message container
+document.body.appendChild(codeMessage);
+
+// Remove after 20 seconds (same as ESCAPE SUCCESSFUL)
+setTimeout(() => {
+    codeMessage.remove();
+}, 20000);
+
+
+            // Play spaceship engine sound
+            spaceshipEngineSound.currentTime = 0;
+            spaceshipEngineSound.play().catch(e => console.log("Sound play blocked:", e));
+
+            paused = true;
+            bgMusic.pause();
+
+            // Return to main menu after short delay
+            setTimeout(() => {
+                // Stop spaceship engine sound
+                spaceshipEngineSound.pause();
+                spaceshipEngineSound.currentTime = 0;
+
+                // Show title screen again
+                titleScreen.style.display = "flex";
+
+                // Reset game state
+                resetGame("win");
+                paused = false;
+                gameStarted = false;
+
+                // Clear messages
+                currentMessage = "";
+            }, 20000); // 20 seconds to show "ESCAPE SUCCESSFUL!"
+        }
+    }
+}
+
+
+
+/* ===== MOVE BOSS PATROL ===== */
+function moveBoss(boss){
+    if(!boss.alive) return;
+
+    // Move horizontally only
+    boss.x += boss.speed * boss.dir;
+
+    // Reverse direction at patrol edges
+    if(boss.x < boss.patrolMinX){
+        boss.x = boss.patrolMinX;
+        boss.dir = 1;
+    }
+    if(boss.x > boss.patrolMaxX){
+        boss.x = boss.patrolMaxX;
+        boss.dir = -1;
+    }
+    boss.y = 8;
+}
+
+// === CALL IN GAME LOOP ===
+updateBoss();
+
+/* ================= HEALTH PICKUPS ================= */
+function updateHealthPickups(){
+    healthPickups.forEach(p => {
+        if(p.taken) return;
+
+        let dx = player.x - p.x;
+        let dy = player.y - p.y;
+
+        if(Math.hypot(dx, dy) < 0.5){
+            player.health = Math.min(player.health + 25, 100);
+            p.taken = true;
+
+            // Play health pickup sound
+            healthPickupSound.currentTime = 0;
+            healthPickupSound.play();
+        }
+    });
+}
+
+/* ================= RAYCAST ================= */
+function cast(){
+    const w = canvas.width, h = canvas.height;
+    // Sky
+    let skyGradient = ctx.createLinearGradient(0, 0, 0, h/2);
+    skyGradient.addColorStop(0, "#000011");
+    skyGradient.addColorStop(1, "#000033");
+    ctx.fillStyle = skyGradient;
+    ctx.fillRect(0, 0, w, h/2);
+
+    // Stars
+    for(let i = 0; i < 200; i++){
+        ctx.fillStyle = "white";
+        ctx.fillRect(Math.random()*w, Math.random()*(h/2), 1, 1);
+    }
+
+    // Grass floor
+    let floorGradient = ctx.createLinearGradient(0, h/2, 0, h);
+    floorGradient.addColorStop(0, "#2a6f2a");
+    floorGradient.addColorStop(1, "#1f4d1f");
+    ctx.fillStyle = floorGradient;
+    ctx.fillRect(0, h/2, w, h/2);
+
+    const fov = Math.PI/3;
+    let zBuffer = [];
+    for(let x = 0; x < w; x++){
+        let ang = player.angle - fov/2 + fov*x/w;
+        let d = 0, hit = false;
+        while(!hit && d < 20){
+            d += 0.02;
+            let rx = player.x + Math.cos(ang)*d;
+            let ry = player.y + Math.sin(ang)*d;
+            let mx = Math.floor(rx), my = Math.floor(ry);
+            if(mx < 0 || my < 0 || mx >= MAP_W || my >= MAP_H || map[my][mx] === 1) hit = true;
+        }
+        let hgt = h / (d || 1);
+
+        if(hit){
+            // Metal wall effect
+            let shade = Math.sin(d*5)*30;
+            ctx.fillStyle = `rgb(${100+shade}, ${100+shade}, 140)`;
+            ctx.fillRect(x, (h - hgt)/2, 1, hgt);
+
+            // Simple metal stripes
+            ctx.strokeStyle = `rgba(255,255,255,0.05)`;
+            ctx.beginPath();
+            ctx.moveTo(x, (h - hgt)/2);
+            ctx.lineTo(x, (h - hgt)/2 + hgt);
+            ctx.stroke();
+        }
+
+        zBuffer.push(d);
+    }
+    return zBuffer;
+}
+
+/* ================= DRAW BULLETS ================= */
+function drawBullets(zBuffer){
+    bullets.forEach(b=>{
+        let dx=b.x-player.x, dy=b.y-player.y;
+        let dist=Math.hypot(dx,dy);
+        let ang=Math.atan2(dy,dx)-player.angle;
+        if(Math.abs(ang)<Math.PI/2){
+            let sx=canvas.width/2+Math.tan(ang)*canvas.width/2;
+            if(sx>=0 && sx<canvas.width && zBuffer[Math.floor(sx)]>dist){
+                let sz=(canvas.height/dist)*0.05;
+                ctx.fillStyle="cyan"; ctx.fillRect(sx-2,canvas.height/2-sz/2,4,sz);
+	        ctx.save();
+ctx.shadowBlur = 10;
+ctx.shadowColor = "cyan";
+ctx.fillStyle = "cyan";
+ctx.fillRect(sx-2, canvas.height/2 - sz/2, 4, sz);
+ctx.shadowBlur = 0;
+ctx.restore();
+
+            }
+        }
+    });
+
+    enemyBullets.forEach(b => {
+        b.x += Math.cos(b.a) * 0.2;
+        b.y += Math.sin(b.a) * 0.2;
+        let mx = Math.floor(b.x), my = Math.floor(b.y);
+        if(mx < 0 || my < 0 || mx >= MAP_W || my >= MAP_H || map[my][mx] === 1){
+            b.life = 0;
+            return;
+        }
+        let dx = player.x - b.x, dy = player.y - b.y;
+        if(Math.hypot(dx, dy) < 0.3){
+            player.health -= 10; 
+            b.life = 0; 
+            if(player.health <= 0) resetGame(); 
+        }
+    });
+}
+
+/* ================= DRAW ENEMIES (3D CUBES) ================= */
+function drawEnemies(zBuffer){
+    const w = canvas.width, h = canvas.height;
+
+    // Sort enemies by distance to player (farther first)
+    const sortedEnemies = enemies
+        .filter(e => e.alive)
+        .map(e => {
+            let dx = e.x - player.x;
+            let dy = e.y - player.y;
+            let dist = Math.hypot(dx, dy);
+            return {...e, dist};
+        })
+        .sort((a,b) => b.dist - a.dist); // farthest first
+
+    sortedEnemies.forEach(e => {
+        let dx = e.x - player.x;
+        let dy = e.y - player.y;
+        let dist = e.dist;
+        let ang = Math.atan2(dy, dx) - player.angle;
+
+        ang = Math.atan2(Math.sin(ang), Math.cos(ang));
+
+        const forceVisible = dist < FORCE_VISIBLE_DIST;
+
+        if(!forceVisible){
+            if(Math.abs(ang) > Math.PI/2 + 0.02) return;
+
+            let steps = dist / 0.02;
+            for(let i=0;i<steps;i++){
+                let t = i / steps;
+                let ix = player.x + dx * t;
+                let iy = player.y + dy * t;
+                if(map[Math.floor(iy)][Math.floor(ix)] === 1) return;
+            }
+        }
+
+        let sx = w/2 + Math.tan(ang) * w/2;
+        if(!forceVisible && (sx < 0 || sx >= w)) return;
+
+        let idx = Math.max(0, Math.min(Math.floor(sx), zBuffer.length-1));
+        if(!forceVisible && zBuffer[idx] < dist) return;
+
+        let size = Math.max(h / Math.max(dist, 0.3) * 0.7, 28);
+        if(!isFullyVisible(dist, sx, size, zBuffer)) return;
+
+        ctx.save();
+        ctx.shadowBlur = 22;
+        ctx.shadowColor = "cyan";
+        ctx.drawImage(
+            imgEnemy,
+            sx - size/2,
+            h/2 - size/2,
+            size,
+            size
+        );
+        ctx.restore();
+
+        // Health bar
+        ctx.fillStyle = "black";
+        ctx.fillRect(sx - size/2, h/2 - size/2 - 10, size, 6);
+        ctx.fillStyle = "lime";
+        ctx.fillRect(
+            sx - size/2,
+            h/2 - size/2 - 10,
+            size * (e.health / 100),
+            6
+        );
+    });
+}
+
+/* ================= DRAW ENEMY BULLETS ================= */
+function drawEnemyBullets(zBuffer){
+    enemyBullets.forEach(b => {
+        let dx = b.x - player.x;
+        let dy = b.y - player.y;
+        let dist = Math.hypot(dx, dy);
+        let ang = Math.atan2(dy, dx) - player.angle;
+
+        // Normalize angle
+        ang = Math.atan2(Math.sin(ang), Math.cos(ang));
+
+        const forceVisible = dist < FORCE_VISIBLE_DIST;
+
+        if(!forceVisible && Math.abs(ang) > Math.PI/2 + 0.02) return;
+
+        let sx = canvas.width/2 + Math.tan(ang) * canvas.width/2;
+        if(!forceVisible && (sx < 0 || sx >= canvas.width)) return;
+
+        let idx = Math.max(0, Math.min(Math.floor(sx), zBuffer.length - 1));
+        if(!forceVisible && zBuffer[idx] < dist) return;
+
+        let size = Math.max(canvas.height / Math.max(dist, 0.3) * 0.08, 6);
+
+        ctx.save();
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "red";
+        ctx.fillStyle = "red";
+        ctx.beginPath();
+        ctx.arc(
+            sx,
+            canvas.height/2,
+            size,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
+        ctx.restore();
+    });
+}
+
+/* ================= UPDATE BOSS ================= */
+function drawBoss(zBuffer){
+    if(!boss.alive) return;
+
+    const w = canvas.width, h = canvas.height;
+
+    let dx = boss.x - player.x;
+    let dy = boss.y - player.y;
+    let dist = Math.hypot(dx, dy);
+    let ang = Math.atan2(dy, dx) - player.angle;
+    ang = Math.atan2(Math.sin(ang), Math.cos(ang));
+
+    if(Math.abs(ang) > Math.PI/2) return;
+
+    let sx = w/2 + Math.tan(ang) * w/2;
+    if(sx < 0 || sx >= w) return;
+
+    let idx = Math.floor(sx);
+    if(zBuffer[idx] < dist) return;
+
+    let size = Math.max(h / Math.max(dist, 0.4) * 1.2, 48);
+    if(!isFullyVisible(dist, sx, size, zBuffer)) return;
+
+    ctx.save();
+    ctx.shadowBlur = 35;
+    ctx.shadowColor = "red";
+    // Use the boss image instead of imgEnemy
+    ctx.drawImage(
+        imgBoss,
+        sx - size/2,
+        h/2 - size/2,
+        size,
+        size
+    );
+    ctx.restore();
+
+    // Boss health bar
+    ctx.fillStyle = "black";
+    ctx.fillRect(sx - size/2, h/2 - size/2 - 18, size, 12);
+
+    ctx.fillStyle = "red";
+    ctx.fillRect(
+        sx - size/2,
+        h/2 - size/2 - 18,
+        size * (boss.health / boss.maxHealth),
+        12
+    );
+}
+
+
+/* ================= DRAW HEALTH PICKUPS (3D CUBES) ================= */
+function drawHealthPickups(zBuffer){
+    healthPickups.forEach(p => {
+        if(p.taken) return;
+
+        let dx = p.x - player.x;
+        let dy = p.y - player.y;
+        let dist = Math.hypot(dx, dy);
+        let ang = Math.atan2(dy, dx) - player.angle;
+
+        ang = Math.atan2(Math.sin(ang), Math.cos(ang));
+
+        const forceVisible = dist < FORCE_VISIBLE_DIST;
+
+        if(!forceVisible && Math.abs(ang) > Math.PI/2 + 0.02) return;
+
+        let sx = canvas.width/2 + Math.tan(ang) * canvas.width/2;
+        if(!forceVisible && (sx < 0 || sx >= canvas.width)) return;
+
+        let idx = Math.max(0, Math.min(Math.floor(sx), zBuffer.length - 1));
+        if(!forceVisible && zBuffer[idx] < dist) return;
+
+        let sz = Math.max(canvas.height / Math.max(dist, 0.3) * 0.3, 24);
+
+        ctx.save();
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = "pink";
+        ctx.drawImage(
+            imgHealth,
+            sx - sz/2,
+            canvas.height/2 - sz/2,
+            sz,
+            sz
+        );
+        ctx.restore();
+    });
+}
+
+/* ================= DRAW GUN ================= */
+function drawGun(){
+    const w=canvas.width,h=canvas.height;
+    ctx.fillStyle="#222"; ctx.fillRect(w/2-18,h-130,36,120);
+    ctx.fillStyle="#555"; ctx.fillRect(w/2-45,h-190,90,60);
+    ctx.fillStyle="#888"; ctx.fillRect(w/2-40,h-215,80,30);
+    ctx.fillStyle="#000"; ctx.fillRect(w/2-6,h-220,12,20);
+    if(fireCooldown>16){ ctx.fillStyle="orange"; ctx.beginPath(); ctx.arc(w/2,h-225,10,0,Math.PI*2); ctx.fill(); }
+}
+
+/* ================= MOVE ================= */
+function move(){
+    // Rotate player with mouse
+    player.angle += mouseDX*0.002; 
+    mouseDX = 0;
+
+    // Rotate player with arrow keys
+    if(keys["ArrowLeft"]) player.angle -= 0.04;
+    if(keys["ArrowRight"]) player.angle += 0.04;
+
+    let c = Math.cos(player.angle);
+    let s = Math.sin(player.angle);
+
+    let dx = 0, dy = 0;
+
+    // Forward/backward
+    if(keys["ArrowUp"]){
+        dx += c * player.speed;
+        dy += s * player.speed;
+    }
+    if(keys["ArrowDown"]){
+        dx -= c * player.speed;
+        dy -= s * player.speed;
+    }
+
+    // Strafing left/right
+    if(keys["d"]){ // strafe left
+        dx -= s * player.speed;
+        dy += c * player.speed;
+    }
+    if(keys["a"]){ // strafe right
+        dx += s * player.speed;
+        dy -= c * player.speed;
+    }
+
+    // Collision check
+    let nx = player.x + dx;
+    let ny = player.y + dy;
+    if(map[Math.floor(ny)][Math.floor(nx)] === 0){
+        player.x = nx;
+        player.y = ny;
+    }
+}
+
+/* ================= RESET GAME ================= */
+
+resetGame("death");   // player died → quick reset
+resetGame("win");     // game beaten → full reset (boss included)
+
+/* ================= RESET GAME ================= */
+function resetGame(reason = "death"){
+    // ===== PLAYER =====
+    player = {
+        x:3.5,
+        y:3.5,
+        angle:0,
+        speed:0.08,
+        health:100,
+        ammo:8,
+        maxAmmo:10
+    };
+
+    // ===== ENEMIES =====
+    enemies = enemiesTemplate.map(e => ({ ...e }));
+
+    // ===== PICKUPS =====
+    healthPickups.forEach(p => p.taken = false);
+    ammoPickups = [];
+
+    // ===== BULLETS =====
+    bullets = [];
+    enemyBullets = [];
+
+    // ===== ONLY DO THIS IF GAME WAS BEATEN =====
+    if(reason === "win"){
+        // ===== MINI BOSS =====
+        boss.alive = true;
+        boss.health = boss.maxHealth;
+        boss.x = boss.homeX;
+        boss.y = boss.homeY;
+        boss.dir = 1;
+        boss.fireRate = 0;
+        boss.isFiring = false;
+        boss.shootCooldown = 0;
+        boss.dirAngle = 0;
+
+        // ===== KEY =====
+        bossKey.x = null;
+        bossKey.y = null;
+        bossKey.collected = false;
+        bossKey.dropped = false;
+
+        // ===== SPACESHIP =====
+        spaceship.unlocked = false;
+    }
+}
+
+
+/* ================= MINI-MAP ================= */
+function drawMiniMap(){
+    const scale = 20;
+    const mapWidth = MAP_W * scale;
+    const mapHeight = MAP_H * scale;
+    const offsetX = canvas.width - mapWidth - 20;
+    const offsetY = canvas.height - mapHeight - 20;
+
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(offsetX - 5, offsetY - 5, mapWidth + 10, mapHeight + 10);
+
+    for(let y = 0; y < MAP_H; y++){
+        for(let x = 0; x < MAP_W; x++){
+            ctx.fillStyle = map[y][x]===1 ? "#888" : "#1f4d1f";
+            ctx.fillRect(offsetX + x*scale, offsetY + y*scale, scale, scale);
+        }
+    }
+
+    healthPickups.forEach(p => {
+        if(!p.taken){
+            ctx.fillStyle = "pink";
+            ctx.fillRect(offsetX + p.x*scale - 5, offsetY + p.y*scale - 5, 10, 10);
+        }
+    });
+
+    enemies.forEach(e => {
+        if(e.alive){
+            ctx.fillStyle = "red";
+            ctx.fillRect(offsetX + e.x*scale - 5, offsetY + e.y*scale - 5, 10, 10);
+        }
+    });
+	
+    // Boss
+    if(boss.alive){
+        ctx.fillStyle = "orange"; // Different color to distinguish from normal enemies
+        ctx.fillRect(offsetX + boss.x*scale - 6, offsetY + boss.y*scale - 6, 12, 12);
+    }
+
+    ctx.fillStyle = "cyan";
+    ctx.beginPath();
+    ctx.arc(offsetX + player.x*scale, offsetY + player.y*scale, 7, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.strokeStyle = "cyan";
+    ctx.beginPath();
+    ctx.moveTo(offsetX + player.x*scale, offsetY + player.y*scale);
+    ctx.lineTo(
+        offsetX + (player.x + Math.cos(player.angle))*scale,
+        offsetY + (player.y + Math.sin(player.angle))*scale
+    );
+    ctx.stroke();
+}
+
+/* ================Ammo Pickup =============*/
+function updateAmmoPickups(){
+    ammoPickups.forEach(a => {
+        if(a.taken) return;
+
+        let dx = player.x - a.x;
+        let dy = player.y - a.y;
+
+        if(Math.hypot(dx, dy) < 0.5){
+            player.ammo = Math.min(player.ammo + 3, player.maxAmmo);
+            a.taken = true;
+
+            // Play ammo pickup sound
+            ammoPickupSound.currentTime = 0;
+            ammoPickupSound.play();
+        }
+    });
+}
+
+function drawAmmoPickups(zBuffer){
+    ammoPickups.forEach(a => {
+        if(a.taken) return;
+
+        let dx = a.x - player.x;
+        let dy = a.y - player.y;
+        let dist = Math.hypot(dx, dy);
+        let ang = Math.atan2(dy, dx) - player.angle;
+
+        ang = Math.atan2(Math.sin(ang), Math.cos(ang));
+
+        const forceVisible = dist < FORCE_VISIBLE_DIST;
+
+        if(!forceVisible && Math.abs(ang) > Math.PI/2 + 0.02) return;
+
+        let sx = canvas.width/2 + Math.tan(ang) * canvas.width/2;
+        if(!forceVisible && (sx < 0 || sx >= canvas.width)) return;
+
+        let idx = Math.max(0, Math.min(Math.floor(sx), zBuffer.length - 1));
+        if(!forceVisible && zBuffer[idx] < dist) return;
+
+        let sz = Math.max(canvas.height / Math.max(dist, 0.3) * 0.25, 22);
+
+        ctx.save();
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = "yellow";
+        ctx.drawImage(
+            imgAmmo,
+            sx - sz/2,
+            canvas.height/2 - sz/2,
+            sz,
+            sz
+        );
+        ctx.restore();
+    });
+}
+
+
+/* ================ SPACE SHIP =============*/
+
+function drawSpaceship(zBuffer){
+    let dx = (spaceship.x + 0.5) - player.x;
+    let dy = (spaceship.y + 0.5) - player.y;
+    let dist = Math.hypot(dx, dy);
+    let ang = Math.atan2(dy, dx) - player.angle;
+
+    ang = Math.atan2(Math.sin(ang), Math.cos(ang));
+
+    const forceVisible = dist < FORCE_VISIBLE_DIST + 0.4;
+
+    if(!forceVisible && Math.abs(ang) > Math.PI/2 + 0.02) return;
+
+    let sx = canvas.width/2 + Math.tan(ang) * canvas.width/2;
+    if(!forceVisible && (sx < 0 || sx >= canvas.width)) return;
+
+    let idx = Math.max(0, Math.min(Math.floor(sx), zBuffer.length - 1));
+    if(!forceVisible && zBuffer[idx] < dist) return;
+
+    let sz = Math.max(canvas.height / Math.max(dist, 0.3) * 1.1, 80);
+    if(!isFullyVisible(dist, sx, sz, zBuffer)) return;
+
+    ctx.save();
+    ctx.shadowBlur = 28;
+    ctx.shadowColor = spaceship.unlocked ? "#00ffcc" : "#ff3333";
+    ctx.drawImage(
+        imgShip,
+        sx - sz/2,
+        canvas.height/2 - sz/2,
+        sz,
+        sz
+    );
+    ctx.restore();
+    
+}
+
+function drawKey(zBuffer){
+    if(!bossKey.dropped || bossKey.collected) return;
+
+    let dx = bossKey.x - player.x;
+    let dy = bossKey.y - player.y;
+    let dist = Math.hypot(dx, dy);
+    let ang = Math.atan2(dy, dx) - player.angle;
+
+    ang = Math.atan2(Math.sin(ang), Math.cos(ang));
+
+    const forceVisible = dist < FORCE_VISIBLE_DIST;
+
+    if(!forceVisible && Math.abs(ang) > Math.PI/2 + 0.02) return;
+
+    let sx = canvas.width/2 + Math.tan(ang) * canvas.width/2;
+    if(!forceVisible && (sx < 0 || sx >= canvas.width)) return;
+
+    let idx = Math.max(0, Math.min(Math.floor(sx), zBuffer.length - 1));
+    if(!forceVisible && zBuffer[idx] < dist) return;
+
+    let bob = Math.sin(performance.now() * 0.004) * 0.05;
+    let sz = Math.max(canvas.height / Math.max(dist, 0.3) * 0.25, 20);
+    if(!isFullyVisible(dist, sx, sz, zBuffer)) return;
+
+    ctx.save();
+    ctx.shadowBlur = 22;
+    ctx.shadowColor = "#ffd700";
+    ctx.drawImage(
+        imgKey,
+        sx - sz/2,
+        canvas.height/2 - sz/2 + bob * sz,
+        sz,
+        sz
+    );
+    ctx.restore();
+    
+}
+
+function isFullyVisible(dist, sx, size, zBuffer, threshold = 0.75){
+    let half = size / 2;
+    let left = Math.max(0, Math.floor(sx - half));
+    let right = Math.min(zBuffer.length - 1, Math.floor(sx + half));
+
+    let visiblePixels = 0;
+    let totalPixels = right - left + 1;
+
+    for(let i = left; i <= right; i++){
+        if(zBuffer[i] >= dist) visiblePixels++;
+    }
+
+    return (visiblePixels / totalPixels) >= threshold;
+}
+
+/* ================= MESSAGE ================= */
+
+function drawMessage(text) {
+    if(!text) return;
+
+    ctx.save();
+    ctx.font = "28px Arial";           // font size & style
+    ctx.fillStyle = "yellow";          // text color
+    ctx.textAlign = "center";          // horizontal center
+    ctx.textBaseline = "middle";       // vertical center
+    ctx.shadowColor = "black";         // shadow for better visibility
+    ctx.shadowBlur = 8;
+    ctx.fillText(text, canvas.width/2, canvas.height/2);
+    ctx.restore();
+}
+
+let currentMessage = "";
+
+function showMessage(text, duration = 2000) {
+    currentMessage = text;
+    setTimeout(() => currentMessage = "", duration);
+}
+
+
+/* ===== DRAW OBJECTIVES HUD ===== */
+let objectives = [
+    { text: "Get the Key", done: false },
+    { text: "Defeat All Enemies", done: false },
+    { text: "Reach the Spaceship", done: false }
+];
+
+function drawObjectivesHUD() {
+    const padding = 10;
+    const fontSize = 18;
+    const boxWidth = 280;
+    const lineHeight = 25;
+
+    // Adjust Y to be below health/ammo (assuming 40px for health/ammo box)
+    const startY = padding + 40;
+
+    ctx.save();
+    ctx.font = `${fontSize}px Arial`;
+    ctx.textBaseline = "top";
+
+    // Background box
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(canvas.width - boxWidth - padding, startY, boxWidth, lineHeight * objectives.length + padding*2);
+
+    // Border
+    ctx.strokeStyle = "yellow";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(canvas.width - boxWidth - padding, startY, boxWidth, lineHeight * objectives.length + padding*2);
+
+    // Draw objectives
+    ctx.textAlign = "left";
+    objectives.forEach((obj, i) => {
+        ctx.fillStyle = obj.done ? "lime" : "white";
+        const status = obj.done ? "✔" : "❌";
+        ctx.fillText(`${status} ${obj.text}`, canvas.width - boxWidth - padding + 10, startY + i * lineHeight + 10);
+    });
+
+    ctx.restore();
+}
+
+// Update objectives
+function updateObjectives() {
+    objectives[0].done = bossKey.collected; // Key collected
+    const allEnemiesDefeated = enemies.every(e => !e.alive) && !boss.alive;
+    objectives[1].done = allEnemiesDefeated; // All enemies defeated
+    const atSpaceship = Math.floor(player.x) === spaceship.x && Math.floor(player.y) === spaceship.y;
+    objectives[2].done = atSpaceship && spaceship.unlocked && allEnemiesDefeated; // Reached spaceship
+}
+
+
+
+/* ================= LOOP ================= */
+function loop(){
+    try{
+        requestAnimationFrame(loop);
+
+        if(paused) return; // Skip updates and rendering when paused
+
+        move();
+        if(fireCooldown>0) fireCooldown--;
+        updateBullets();
+        updateEnemies();
+	updateBoss();
+	updateKey();
+        updateHealthPickups();
+        updateAmmoPickups();
+	updateSpaceship();
+        const zBuffer = cast();
+	drawSpaceship(zBuffer);
+        drawEnemies(zBuffer);
+	drawBoss(zBuffer);
+        drawHealthPickups(zBuffer);
+	drawKey(zBuffer);
+        drawAmmoPickups(zBuffer);
+	drawEnemies(zBuffer);
+	drawEnemyBullets(zBuffer);  // enemy bullets
+	drawBullets(zBuffer);
+        drawGun();
+        //drawMiniMap();
+	drawMessage(currentMessage);
+	updateObjectives();
+	drawObjectivesHUD();
+        hud.innerText = `Health: ${player.health} | Ammo: ${player.ammo}/${player.maxAmmo}`;
+    } catch(e){
+        console.error(e);
+    }
+}
+
+loop();
+</script>
+</body>
+</html>

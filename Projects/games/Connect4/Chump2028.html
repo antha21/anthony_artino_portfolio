@@ -1,0 +1,1413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Presidential Debate — Dog vs. Murray, Mr. Green, Jeb Bush (Kahoot-style)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+<style>
+
+
+.app {
+  height: 100vh; /* fill viewport height */
+  overflow: hidden; /* just in case */
+}
+
+.screen {
+  flex-direction: column; /* vertical layout */
+  justify-content: space-between; /* push content to fill height */
+  height: 100vh;          /* full viewport height */
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.screen.active {
+  display: flex;
+}
+
+
+.stage {
+  display: flex;
+  flex: 1 1 auto;      /* expand to fill available height */
+  gap: 12px;
+  overflow: hidden;    /* prevent stage content from overflowing */
+}
+
+.left, .right {
+  overflow: hidden;    /* prevent internal scrolling */
+  display: flex;
+  flex-direction: column;
+}
+
+.dialogue {
+  flex: 1 1 auto;        /* fill remaining vertical space */
+  overflow-y: auto;      /* allow internal scroll if needed */
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* pushes timer/choices to bottom */
+}
+
+#choicesArea, #timerWrap, #resultPanel, #finalPanel {
+  flex-shrink: 0; /* prevents these from being squished */
+}
+
+.choice {
+  background: linear-gradient(180deg, #222 0%, #111 100%);
+  border: none;                     /* ← removed red ring */
+  border-radius: 12px;
+
+  padding: 12px 16px;
+  margin: 10px 0;
+
+  color: #fff;
+  font-family: "Inter", sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+
+  /* Realistic “pop out” depth */
+  box-shadow:
+    0 4px 10px rgba(0,0,0,0.55),    /* outer shadow = pop out */
+    inset 0 2px 4px rgba(255,255,255,0.06),   /* subtle top bevel */
+    inset 0 -2px 6px rgba(0,0,0,0.45);        /* bottom depth */
+
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+/* Hover — glowing CNN red “highlight edge” */
+.choice:hover {
+  transform: translateY(-3px);  /* stronger pop */
+  background: linear-gradient(180deg, #292929, #141414);
+
+  box-shadow:
+    0 6px 14px rgba(0,0,0,0.6),
+    0 0 12px rgba(255,0,0,0.45),           /* red glow only on hover */
+    inset 0 2px 6px rgba(255,255,255,0.1),
+    inset 0 -2px 8px rgba(0,0,0,0.5);
+}
+
+/* Click — press effect */
+.choice:active {
+  transform: scale(0.97);
+  box-shadow:
+    0 3px 8px rgba(0,0,0,0.5),
+    inset 0 0 10px rgba(0,0,0,0.45);
+}
+
+/* When the choice is selected */
+.choice.selected {
+  background: linear-gradient(180deg, #ff2d2d, #9c0000);
+  color: #fff;
+  box-shadow:
+    0 0 16px rgba(255,0,0,0.6),
+    inset 0 0 10px rgba(255,255,255,0.2);
+}
+
+
+
+:root{
+  --bg:#0b0f1c; --panel:#121827; --accent:#ff3b3b; --accent2:#00bfff; --muted:#c0c6d6;
+  --live:#ff3b3b; --glass:rgba(255,255,255,0.05);
+  --choiceA:#1abc9c; --choiceB:#f39c12; --choiceC:#3498db; --choiceD:#9b59b6;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  color-scheme: dark;
+}
+
+html,body{height:100%;margin:0;background:
+  linear-gradient(180deg,var(--bg),#040612 70%);
+  color:#eaf4ff; -webkit-font-smoothing:antialiased}
+
+.app{
+  max-width:1200px;margin:18px auto;border-radius:12px;overflow:hidden;
+  box-shadow:0 30px 90px rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.05);
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+}
+
+.header{
+  display:flex;align-items:center;gap:14px;padding:14px 18px;
+  border-bottom:2px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.3);
+  backdrop-filter:blur(6px);
+}
+.flag{width:56px;height:36px;border-radius:6px;background:linear-gradient(90deg,#c62828,#fff);display:flex;align-items:center;justify-content:center;font-weight:900;color:#041026;font-family:"Playfair Display";}
+.title{font-weight:800;font-size:18px}
+.sub{color:var(--muted);font-size:13px;margin-left:auto}
+
+/* screens */
+.screen{padding:28px;display:none;min-height:560px}
+.screen.active{display:block}
+
+/* start menu */
+.menu{display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center}
+.menu h2{font-family:"Playfair Display";font-size:28px;margin:0;color:var(--accent)}
+.menu .controls{display:flex;gap:10px}
+
+/* debate stage layout */
+.stage{display:grid;grid-template-columns:1fr 420px;gap:18px;align-items:start; margin-top: -20px;}
+.stage .left,.stage .right{
+  background:var(--panel);padding:18px;border-radius:10px;
+  box-shadow:0 5px 30px rgba(0,0,0,0.3);
+  border:1px solid rgba(255,255,255,0.05);
+}
+
+/* top candidate strip */
+.candidates-strip{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.candidate-card{flex:1;background:linear-gradient(180deg,#10162b,#121827);padding:10px;border-radius:8px;text-align:center;border:1px solid rgba(255,255,255,0.05);box-shadow:0 2px 8px rgba(0,0,0,0.4)}
+.candidate-img{height:80px;background:linear-gradient(180deg,#0f1724,#071022);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:800;font-size:12px}
+.candidate-name{margin-top:8px;font-family:"Playfair Display";font-weight:700;color:var(--accent);font-size:15px}
+.candidate-sub{color:var(--muted);font-size:12px}
+
+/* center dialogue area */
+.dialogue{margin-top:18px;background:#10142a;padding:18px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);min-height:260px;display:flex;flex-direction:column}
+.dialogue .meta{display:flex;align-items:center;gap:12px}
+.live-tag{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(255,0,0,0.2);border:1px solid rgba(255,255,255,0.08);animation:blink 1s infinite alternate}
+@keyframes blink{0%{opacity:1}50%{opacity:0.6}100%{opacity:1}}
+.live-dot{width:10px;height:10px;border-radius:50%;background:var(--live);box-shadow:0 0 15px rgba(255,0,0,0.5)}
+.question-text{margin-top:12px;font-weight:700;font-size:18px;color:#dfefff}
+.speaker-line{margin-top:6px;padding:12px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));opacity:0;transform:translateY(6px);transition:all 260ms ease}
+.speaker-line.visible{opacity:1;transform:none}
+.speaker-line .who{font-weight:800;color:var(--accent2);margin-right:6px; font-size: 14px;}
+/* Speaker-specific colors */
+#lineGreen .who { color: #2ecc71; }  
+#lineMurray .who { color: #ff66b2; }  
+#lineJeb .who { color: #f39c12; }  
+
+
+/* right panel: controls and choices */
+.panel-title{font-family:"Playfair Display";font-weight:800;color:var(--accent);font-size:18px}
+.q-text{margin-top:12px;color:#dbeafc;min-height:80px}
+.controls{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+.btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:800}
+.btn.primary{background:var(--accent);color:white;box-shadow:0 5px 15px rgba(255,59,59,0.5)}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--muted)}
+
+/* smaller, more compact Kahoot-style buttons */
+.choices{
+  display:grid;
+  grid-template-columns:1fr 1fr; /* two per row */
+  gap:8px; /* reduce gap */
+  margin-top:10px;
+}
+
+.choice{
+  padding:10px; /* smaller padding */
+  font-size:13px; /* slightly smaller text */
+  border-radius:8px; /* slightly smaller radius */
+}
+
+/* color buckets */
+.choice[data-choice="A"]{background:var(--choiceA)}
+.choice[data-choice="B"]{background:var(--choiceB)}
+.choice[data-choice="C"]{background:var(--choiceC)}
+.choice[data-choice="D"]{background:var(--choiceD)}
+
+/* timer ring */
+.timer-wrap{display:flex;align-items:center;gap:12px;margin-top:12px}
+.timer-circle{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:4px solid rgba(255,255,255,0.08)}
+.timer-number{font-weight:900;font-size:20px;color:var(--accent)}
+
+/* results / scoreboard */
+.results{padding:12px;background:linear-gradient(180deg,#10142a,#0b0f1c);border-radius:10px;border:1px solid rgba(255,255,255,0.05);margin-top:14px}
+.bar{flex:1;height:14px;background:rgba(255,255,255,0.05);border-radius:10px;overflow:hidden}
+.bar > i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#ffd166)}
+
+
+.ticker-wrap{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  overflow:hidden;
+  background:rgba(0,0,0,0.3);
+  backdrop-filter:blur(4px);
+  border-top:1px solid rgba(255,255,255,0.05);
+  z-index:999;
+}
+
+.ticker-content{
+  display:flex;
+  gap:60px;
+  white-space:nowrap;
+  padding:8px 0;
+  animation:scrollTicker 20s linear infinite;
+  color:var(--muted);
+  font-weight:700;
+}
+
+@keyframes scrollTicker{
+  0%{transform:translateX(100%)}
+  100%{transform:translateX(-100%)}
+}
+
+.chump-news{
+  position:fixed;
+  bottom:40px; /* above ticker */
+  left:16px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  background:linear-gradient(145deg, #ff0000, #cc0000); /* subtle gradient for depth */
+  padding:6px 12px;
+  border-radius:6px;
+  font-family:"Inter",sans-serif;
+  z-index:1000;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.5), 0 0 8px rgba(255,0,0,0.6) inset;
+}
+
+.chump-news .logo{
+  font-weight:900;
+  font-size:18px;
+  color:white;
+  text-shadow:
+     1px 1px 0 #990000,
+     2px 2px 2px rgba(0,0,0,0.5),
+     0 0 6px rgba(255,255,255,0.2);
+}
+
+.chump-news .text{
+  font-weight:700;
+  font-size:16px;
+  color:white;
+  margin-left:4px;
+  text-shadow:
+     1px 1px 0 #990000,
+     2px 2px 2px rgba(0,0,0,0.5),
+     0 0 6px rgba(255,255,255,0.2);
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+
+  /* Full screen */
+  width: 100%;
+  height: 100vh;
+
+  /* Background image */
+  background-image: url('ChumpNews.jpg'); /* relative path */
+  background-size: 100% 100%; /* stretch both width and height */
+  background-position: center;
+  background-repeat: no-repeat;
+
+  position: relative; /* for overlay */
+}
+
+/* Optional overlay for readability */
+.menu::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.3); /* semi-transparent dark overlay */
+  z-index: 0;
+}
+
+.menu * {
+  position: relative;
+  z-index: 1; /* text above overlay */
+}
+
+/* UNIVERSAL BUTTON HOVER EFFECT */
+.btn:hover {
+  filter: brightness(1.25);
+  box-shadow: 0 0 14px rgba(255,255,255,0.3);
+  transform: translateY(-2px);
+}
+
+/* Stronger glow for red primary buttons */
+.btn.primary:hover {
+  box-shadow: 0 0 16px rgba(255,59,59,0.7);
+}
+
+/* Ghost button hover boost */
+.btn.ghost:hover {
+  background: rgba(255,255,255,0.12) !important;
+  box-shadow: 0 0 12px rgba(255,255,255,0.35);
+}
+
+/* 3D GAME TITLE EFFECT */
+.game-title {
+  font-size: 82px;
+  font-weight: 900;
+  text-align: center;
+  color: #ffffff;
+  letter-spacing: 4px;
+  margin: 0;
+  padding: 0;
+
+  /* 3D extrude look */
+  text-shadow:
+    0px 3px 0px #b30000,
+    0px 6px 0px #8a0000,
+    0px 9px 0px #570000,
+    0px 12px 20px rgba(255,0,0,0.45);
+
+  /* subtle glow pulse */
+  animation: titleGlow 3s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+
+/* GLOW ANIMATION */
+@keyframes titleGlow {
+  0% {
+    text-shadow:
+      0px 3px 0px #b30000,
+      0px 6px 0px #8a0000,
+      0px 9px 0px #570000,
+      0 0 18px rgba(255, 60, 60, 0.6);
+  }
+  50% {
+    text-shadow:
+      0px 3px 0px #b30000,
+      0px 6px 0px #8a0000,
+      0px 9px 0px #570000,
+      0 0 32px rgba(255, 100, 100, 0.95);
+  }
+  100% {
+    text-shadow:
+      0px 3px 0px #b30000,
+      0px 6px 0px #8a0000,
+      0px 9px 0px #570000,
+      0 0 18px rgba(255, 60, 60, 0.6);
+  }
+}
+
+/* Subtle 3D tilt on hover */
+.game-title:hover {
+  transform: perspective(500px) rotateX(8deg) rotateY(-8deg) scale(1.05);
+  transition: 0.25s ease;
+}
+
+.hero-title {
+  font-family: 'Montserrat', sans-serif;  /* CNN‑inspired sans */
+  font-size: 96px;                       /* slightly smaller refined size */
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  margin: 0;
+  padding: 0;
+
+  /* Bold news red color */
+  color: #E10600;
+
+  /* Thin black outline for contrast */
+  -webkit-text-stroke: 2px #000;
+  text-stroke: 2px #000;
+
+  /* Subtle outer glow/shadow */
+  text-shadow:
+    1px 1px 2px rgba(0,0,0,0.5),
+    0 2px 0 #000,
+    0 4px 4px rgba(0,0,0,0.45);
+
+  /* Entrance pop animation */
+  opacity: 0;
+  transform: scale(0.6) translateY(-30px);
+  animation: titleIntro 1s cubic-bezier(0.16,1,0.3,1) forwards;
+  text-align: center;
+
+  /* Optional subtle tilt on hover */
+  transition: transform 0.25s ease;
+  transform-style: preserve-3d;
+}
+
+.hero-title:hover {
+  transform: perspective(900px) rotateX(2deg) rotateY(-2deg) scale(1.05);
+}
+
+@keyframes titleIntro {
+  0% {
+    opacity: 0;
+    transform: scale(0.6) translateY(-30px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.candidate-img {
+    width: 120px;            /* adjust width as needed */
+    height: 120px;           /* uniform square box */
+    border-radius: 12px;     /* optional: rounded corners */
+    background-size: cover;   /* fills box without stretching */
+    background-position: center; /* center the image */
+    background-repeat: no-repeat;
+    border: 2px solid var(--muted); /* optional border for style */
+}
+
+/* Background images for each candidate */
+#imgGreen {
+    background-image: url('C:/Users/anthp/OneDrive/Desktop/Connect4/Mr.GreenMAD.webp');
+}
+
+#imgMurray {
+    background-image: url('C:/Users/anthp/OneDrive/Desktop/Connect4/Screenshot_20251211_123407_Chrome.jpg');
+}
+
+#imgDog {
+    background-image: url('C:/Users/anthp/OneDrive/Desktop/Connect4/IMG_20220501_135547_688.jpg');
+}
+
+#imgJeb {
+    background-image: url('C:/Users/anthp/OneDrive/Desktop/Connect4/Jeb Bush.avif');
+}
+
+.candidate-img.highlight {
+  box-shadow: 0 0 12px 4px #ff0000; /* bright red glow */
+  border-radius: 6px;
+  transition: box-shadow 0.3s ease;
+}
+
+
+
+
+
+
+
+</style>
+
+
+
+
+</head>
+
+<body>
+  <div class="app" role="application" aria-label="Presidential Debate Game — Kahoot style">
+
+    <div class="header">
+      <div class="flag">USA</div>
+      <div class="title">PrimeTime Debate - Live Mini-Game</div>
+      <div class="sub">Playing as: <strong style="color:var(--accent)">Daisy DeShrimpo</strong></div>
+    </div>
+
+    <!-- CUTSCENE screen -->
+<main id="cutscene" class="screen active">
+  <div class="cutscene-wrapper" style="transform: translateY(-40px);"> <!-- Slight upward shift -->
+    <div class="cutscene-panel">
+      <div class="cutscene-header">
+        <span class="live-indicator">LIVE</span>
+        <h1>The Debate - Tonight</h1>
+      </div>
+
+      <div class="cutscene-content" style="display: flex; gap: 16px; align-items: flex-start;">
+        <!-- Chris Wallace image -->
+        <img src="C:\Users\anthp\OneDrive\Desktop\Connect4\Chris Wallace.jpg" 
+             alt="Chris Wallace" 
+             style="width: 120px; height: auto; border-radius: 8px; flex-shrink: 0; box-shadow: 0 0 15px rgba(0,0,0,0.5); border: 2px solid #FFD700;">
+
+        <div style="flex:1; background: rgba(255,255,255,0.05); border-left: 4px solid #FFD700; padding: 14px 18px; border-radius: 8px; 
+                    text-shadow: 0 0 3px rgba(0,0,0,0.7); font-family: 'Inter', sans-serif; color: #E0FFE0; font-size: 1em; line-height: 1.5;">
+          <p>“Good evening everyone! Welcome to tonight’s thrilling presidential debate. I’m <strong>Chris Wallace</strong>, your moderator for the evening. Let’s meet our candidates!”</p>
+
+          <p><span class="candidate green">Mr. Green:</span> He loves meat and wants to run his economy like a deli shop. Can he deliver?</p>
+          <p><span class="candidate blue">Murray:</span> The brawniest, food-obsessed strategist who thinks stealing is a life skill. Chaos awaits.</p>
+          <p><span class="candidate purple">Daisy DeShrimpo:</span> The underdog, clever, bold, and fearless. Ready to shake up the nation!</p>
+          <p><span class="candidate red">Jeb Bush:</span> And then there's Jeb........</p>
+
+
+          <p>"Each candidate will answer 10 questions. Answer wisely as the American citizens will judge. Candidates, are you ready?”</p>
+        </div>
+      </div>
+
+      <div class="cutscene-buttons">
+        <button class="btn shiny-red" id="goToMenuBtn">Skip</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #cutscene {
+      display: flex;
+      justify-content: center;
+      align-items: center; /* Fully centers horizontally and vertically */
+      background: linear-gradient(135deg, #0b0c23 0%, #1a1c3d 100%);
+      font-family: 'Inter', sans-serif;
+      padding: 15px;
+      height: 95vh;
+    }
+
+    .cutscene-wrapper {
+      max-width: 640px;
+      width: 100%;
+    }
+
+    .cutscene-panel {
+      background: linear-gradient(145deg, #1a1a1a, #222233);
+      border: 2px solid #FFD700;
+      border-radius: 12px;
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+      padding: 18px 25px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    .cutscene-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .cutscene-header h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.6em;
+      color: #FFD700;
+      margin: 0;
+      text-shadow: 1px 1px 4px #000;
+    }
+
+    .live-indicator {
+      background: #FF0000;
+      color: white;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      text-transform: uppercase;
+      box-shadow: 0 0 6px rgba(255,0,0,0.7);
+    }
+
+    .cutscene-content p {
+      margin: 6px 0;
+      font-size: 1em;
+      line-height: 1.5;
+      color: #E0FFE0;
+    }
+
+    .candidate.green { color: #7CFC00; font-weight: 700; }
+    .candidate.blue { color: #1E90FF; font-weight: 700; }
+    .candidate.red { color: #FF4500; font-weight: 700; }
+    .candidate.purple { color: #DA70D6; font-weight: 700; }
+
+    .cutscene-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      padding: 10px 24px;
+      font-size: 0.95em;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn.ghost {
+      background: transparent;
+      color: #fff;
+      border: 2px solid #fff;
+    }
+    .btn.ghost:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .btn.shiny-red {
+      background: linear-gradient(145deg, #FF4C4C, #FF1E1E);
+      color: #fff;
+      font-weight: 700;
+      border: 2px solid #FF0000;
+      text-shadow: 0 0 4px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 8px rgba(255,0,0,0.5);
+    }
+    .btn.shiny-red:hover {
+      background: linear-gradient(145deg, #FF1E1E, #FF4C4C);
+      box-shadow: 0 6px 12px rgba(255,0,0,0.7);
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(-20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      .cutscene-panel { padding: 14px 18px; }
+      .cutscene-header h1 { font-size: 1.4em; }
+      .cutscene-content p { font-size: 0.95em; }
+      .btn { padding: 8px 20px; font-size: 0.9em; }
+      .cutscene-content { flex-direction: column; align-items: flex-start; }
+      .cutscene-content img { width: 100px; margin-bottom: 12px; }
+    }
+  </style>
+</main>
+
+
+    <!-- START MENU screen -->
+    <main id="menu" class="screen" aria-hidden="true">
+      <div class="menu" style="min-height:420px">
+        <h1 class="hero-title">CHUMP 2028</h1>
+        <p style="color:var(--muted);max-width:720px;text-align:center"></p>
+        <div class="controls" style="margin-top:20px">
+          <button class="btn ghost" id="howBtn">How to Play</button>
+          <button class="btn primary" id="startBtn">Start Debate</button>
+        </div>
+      </div>
+    </main>
+
+
+
+    <!-- HOW TO PLAY modal (simple screen) -->
+    <main id="how" class="screen" data-once="true">
+      <div style="padding:22px">
+        <h2 style="font-family:Playfair Display;color:var(--accent)">How to Play</h2>
+        <ul style="color:var(--muted)">
+          <li>Each round, the Moderator will ask a question followed by the candidates responses: Mr. Green → Murray → Jeb → Your answer.</li>
+          <li>You have 45 seconds to answer each question once choices appear.</li>
+          <li>Use keys <strong>1/2/3/4</strong> or touchpad to choose.</li>
+          <li>Scoreboard is shown only after you answer to compare your results against your opponents.</li>
+          <li>Candidate with the most points will become the 48th President of the United States of America.</li>
+        </ul>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn ghost" id="howBack">Back</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- GAME stage -->
+    <main id="game" class="screen" aria-hidden="true">
+      <div class="stage">
+        <div class="left">
+          <!-- top candidate strip -->
+          <div class="candidates-strip">
+            <div class="candidate-card">
+              <div class="candidate-img" id="imgGreen"></div>
+              <div class="candidate-name">Mr. Green</div>
+              <div class="candidate-sub">Butcher • Small Biz</div>
+            </div>
+            <div class="candidate-card">
+              <div class="candidate-img" id="imgMurray"></div>
+              <div class="candidate-name">Murray</div>
+              <div class="candidate-sub">Brawny Strategist</div>
+            </div>
+            <div class="candidate-card">
+              <div class="candidate-img" id="imgDog"></div>
+              <div class="candidate-name">Daisy DeShrimpo</div>
+              <div class="candidate-sub">Chubby • Cute</div>
+            </div>
+            <div class="candidate-card">
+              <div class="candidate-img" id="imgJeb"></div>
+              <div class="candidate-name">Jeb Bush</div>
+              <div class="candidate-sub">Stable • Experienced</div>
+            </div>
+          </div>
+
+          <!-- center dialogue -->
+          <div class="dialogue" id="dialogue">
+            <div class="meta">
+              <div class="live-tag"><div class="live-dot"></div><div style="font-weight:800">LIVE</div></div>
+              <div style="color:var(--muted);margin-left:auto">PrimeTime Network — Debate Night</div>
+            </div>
+
+            <div class="question-text" id="moderatorText">Moderator question will appear here.</div>
+
+            <div id="lineGreen" class="speaker-line"><span class="who">Mr. Green:</span><span class="text"></span></div>
+            <div id="lineMurray" class="speaker-line"><span class="who">Murray:</span><span class="text"></span></div>
+            <div id="lineJeb" class="speaker-line"><span class="who">Jeb Bush:</span><span class="text"></span></div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;margin-top:12px">
+            <button class="btn primary" id="nextSpeaker">Next</button>
+          </div>
+        </div>
+
+        <div class="right">
+          <div class="panel-title" id="panelTitle">Question 1</div>
+          <div class="hint" id="panelHint">Awaiting moderator</div>
+          <div class="q-text" id="panelText">Press Next to reveal the moderator question and each opponent's response in order.</div>
+
+          <div class="timer-wrap" id="timerWrap" style="display:none">
+            <div class="timer-circle"><div class="timer-number" id="timerNum">45</div></div>
+            <div style="flex:1">
+              <div style="font-weight:800">Time remaining</div>
+              <div style="color:var(--muted);margin-top:6px">Choose before the timer runs out.</div>
+            </div>
+          </div>
+
+          <!-- choices (hidden until all 3 opponents have spoken) -->
+          <div id="choicesArea" style="display:none">
+            <div class="choices" id="choicesGrid">
+              <button tabindex="0" class="choice" data-choice="A" id="choiceA"></button>
+              <button tabindex="0" class="choice" data-choice="B" id="choiceB"></button>
+              <button tabindex="0" class="choice" data-choice="C" id="choiceC"></button>
+              <button tabindex="0" class="choice" data-choice="D" id="choiceD"></button>
+            </div>
+          </div>
+
+          <!-- results (shown after answer) -->
+          <div id="resultPanel" style="display:none">
+            <div class="results">
+              <div class="result-msg" id="roundMsg">You earned X points</div>
+              <div class="score-bars">
+                <div class="bar-row"><div class="label">You</div><div class="bar"><i id="barYou" style="width:0%"></i></div><div style="width:40px;text-align:right" id="valYou">0</div></div>
+                <div class="bar-row"><div class="label">Mr. Green</div><div class="bar"><i id="barGreen" style="width:0%"></i></div><div style="width:40px;text-align:right" id="valGreen">0</div></div>
+                <div class="bar-row"><div class="label">Murray</div><div class="bar"><i id="barMurray" style="width:0%"></i></div><div style="width:40px;text-align:right" id="valMurray">0</div></div>
+                <div class="bar-row"><div class="label">Jeb</div><div class="bar"><i id="barJeb" style="width:0%"></i></div><div style="width:40px;text-align:right" id="valJeb">0</div></div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;margin-top:12px">
+                <button class="btn primary" id="continueBtn">Continue</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+
+<!-- FINAL PANEL OUTSIDE GAME -->
+<main id="finalPanel" class="screen">
+  <div class="final">
+    <h2 id="finalTitle">Final Result</h2>
+    <p id="finalText" style="color:var(--muted)"></p>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn ghost" id="menuBtn">Main Menu</button>
+      <button class="btn primary" id="playAgainBtn">Play Again</button>
+    </div>
+  </div>
+</main>
+
+
+ <!-- ticker -->
+<div class="ticker-wrap">
+  <div class="ticker-content" id="tickerContent">
+    <span>Welcome to PrimeTime Debate, Daisy DeShrimpo is in the lead!</span>
+    <span>Next question coming up, Mr. Green looks confident.</span>
+    <span>Murray is analyzing the question…</span>
+    <span>Stay tuned for live results on CHUMP NEWS!</span>
+    <span>Low Energy Jeb is struggling in the polls! Does he have what it takes to still win the presidency?</span>
+    <span>For the first time in history, Daisy DeShrimpo has just won the Chump of the Year Award in back-to-back years.</span>
+    <span>Alexandria Artino was the runner-up for the Chump of the Year Award. Better luck next year!</span>
+    <span>Father Heilman is inviting Spiritual Warrior MaryAnne Artino to his upocoming podcast episode. Stay Tune!</span>
+    <span>Take Control of your Tuning Problem! Buy yourself a Guitar NutBuster before its too late!</span>
+    <span>Boys Who Cry is ranked as the number one hit band accross America.</span>
+    <span>Merry Christmas Everyone! 2025 was quite the year.</span>
+
+
+  </div>
+</div>
+
+<!-- CHUMP NEWS overlay -->
+<div class="chump-news">
+  <div class="logo">CHUMP</div>
+  <div class="text">NEWS</div>
+</div>
+
+<!-- ROUND RESULTS screen -->
+<main id="roundResults" class="screen" data-once="true">
+  <div class="menu" style="min-height:400px">
+    <h2>Round Results</h2>
+    <div class="results">
+      <div class="score-bars">
+        <div class="bar-row"><div class="label">You</div><div class="bar"><i id="resBarYou" style="width:0%"></i></div><div style="width:40px;text-align:right" id="resValYou">0</div></div>
+        <div class="bar-row"><div class="label">Mr. Green</div><div class="bar"><i id="resBarGreen" style="width:0%"></i></div><div style="width:40px;text-align:right" id="resValGreen">0</div></div>
+        <div class="bar-row"><div class="label">Murray</div><div class="bar"><i id="resBarMurray" style="width:0%"></i></div><div style="width:40px;text-align:right" id="resValMurray">0</div></div>
+        <div class="bar-row"><div class="label">Jeb</div><div class="bar"><i id="resBarJeb" style="width:0%"></i></div><div style="width:40px;text-align:right" id="resValJeb">0</div></div>
+      </div>
+      <p id="resMsg" style="margin-top:12px"></p>
+      <button class="btn primary" id="nextRoundBtn" style="margin-top:12px">Next Question</button>
+    </div>
+  </div>
+</main>
+
+
+
+
+
+
+  </div>
+
+<script>
+
+
+/* === Script data (exact quotes & points === */
+const QUESTIONS = [
+  {
+    id:1, title:"ECONOMY",
+    moderator: "“What would be your plan to boost the economy?”",
+    green: "“Easy! Support small businesses like my butcher shop. But do the feds help me? No! They drown me in paperwork about ‘proper refrigeration.’ Ridiculous!”",
+    murray: "“The Murray has a plan: more jobs… specifically for getaway drivers. I mean legitimate drivers. Also donut factories. Lots of those.”",
+    jeb: "“We should focus on reducing taxes and improving infrastructure to help business growth.”",
+    choices: {
+      A: "“Green’s economic plan is just ‘help my shop.’ A president needs to help the country, not one deli.”",
+      B: "“Murray’s economic idea is funding donut heists. Pretty sure those don’t create jobs.”",
+      C: "“We boost the economy by supporting real small businesses, not tantrums or theft. Simple and smart.”",
+      D: "“I’ll build the strongest economy this nation’s ever seen. It will be fast, efficient, and unbeatable.”"
+    },
+    points: { A:1, B:2, C:4, D:3 }
+  },
+  {
+    id:2, title:"HEALTHCARE",
+    moderator: "“How will you improve healthcare?”",
+    green: "“I get customers coming in coughing all over my deli counter! Maybe if people washed their hands more, we wouldn’t need healthcare. And stop asking me to wear hairnets, I’m a butcher, not a surgeon!”",
+    murray: "“The Murray's health plan? Stay fast, stay strong, and avoid the cops. Oh wait, we’re talking medical stuff. Uh… bandages?”",
+    jeb: "“Healthcare should be accessible and quite efficient.”",
+    choices: {
+      A: "“Mr. Green thinks coughing customers are the problem. Maybe he should stop yelling at them first.”",
+      B: "“Murray’s healthcare advice is basically ‘run from your problems.’ That’s not a medical plan.”",
+      C: "“I’ll make healthcare reliable, affordable, and modern which is something neither panicking shopkeepers nor criminals can derail.”",
+      D: "“I’ll create a healthcare system so effective that even chaos won’t slow it down.”"
+    },
+    points: { A:2, B:2, C:4, D:3 }
+  },
+  {
+    id:3, title:"FOREIGN POLICY",
+    moderator: "“What is your foreign policy strategy?”",
+    green: "“I import meat from three countries. You hear! THREE! And every one of them delays shipments! If they want a good relationship with America, they should deliver on time and stop messing with my invoices!”",
+    murray: "“Well… Me and my trusty van have traveled all over the world. I have been to Paris, Canada, Russia, India, and many more countries. Thus, the Murray believes in… international cooperation! And if that fails, we do what I always do: sneak in, grab what we need, and run. Works every time. Ask Interpol.”",
+    jeb: "“We need strong alliances and diplomacy.”",
+    choices: {
+      A: "“Green’s foreign policy is just yelling at shipping companies. That’s not diplomacy, that’s basically customer service rage.”",
+      B: "“Murray just admitted his foreign strategy is crime. Probably not ideal for global trust.”",
+      C: "“I’ll make allies, secure trade, and keep the nation respected without tantrums or theft.”",
+      D: "“My foreign policy is strength and clarity. Nations will know exactly where we stand.”"
+    },
+    points: { A:3, B:3, C:4, D:2 }
+  },
+  {
+    id:4, title:"EDUCATION",
+    moderator: "“How would you improve the education system?”",
+    green: "“Kids these days don’t know the first thing about running a shop. Let them apprentice in real trades. Put a knife in their hand! Well… maybe not a sharp one. Insurance hates that.”",
+    murray: "“School was tough for The Murray. Not the classes, but the alarms! Every time I tried to… borrow things from the lockers, especially Mrs. Puffin’s cookie jar, the security always freaked out. So I say: We need better alarms!”",
+    jeb: "“More training and funding will support teachers.”",
+    choices: {
+      A: "“Green wants students slicing deli meat instead of learning. Maybe teach them math before meat cutting.”",
+      B: "“Murray thinks breaking into lockers counts as school experience. It doesn’t.”",
+      C: "“I’ll improve schools with real resources, not sandwiches or security footage.”",
+      D: "“Education will soar under my leadership. Disciplined, innovative, and unstoppable.”"
+    },
+    points: { A:2, B:4, C:3, D:1 }
+  },
+  {
+    id:5, title:"CLIMATE CHANGE",
+    moderator: "“What is your plan to tackle climate change?”",
+    green: "“My freezer bill is through the roof because these warm summers keep getting hotter. If you want a climate policy? Start with paying my electric bill, because I sure can’t!”",
+    murray: "“Climate change? The Murray once outran a wildfire. True story. So my plan: more cardio and then we can steal air conditioners.”",
+    jeb: "“We should invest in clean energy.”",
+    choices: {
+      A: "“Green blames his electric bill on the climate but refuses to modernize anything in his shop.”",
+      B: "“Murray stealing air conditioners isn’t a climate plan. That’s just… theft with extra steps.”",
+      C: "“I’ll invest in clean energy and real solutions. Not excuses, not crimes.”",
+      D: "“My climate plan will be big, smart, and so effective the weather will respect it.”"
+    },
+    points: { A:4, B:2, C:3, D:1 }
+  },
+  {
+    id:6, title:"INFRASTRUCTURE",
+    moderator: "“How will you improve infrastructure?”",
+    green: "“I need delivery trucks to get to my shop. But the roads? They're full of potholes! Last week a whole crate of sausages flew out the back. I will fix the roads before I lose more inventory!”",
+    murray: "“The Murray has lifted many heavy objects including stolen safes. I can help build bridges with upper-body strength alone. Might drop one or two but that’s part of the thrill!”",
+    jeb: "“Infrastructure is key to long-term national growth.”",
+    choices: {
+      A: "“Green only cares about fixing roads leading to his shop. The country is bigger than one block.”",
+      B: "“Murray building bridges by lifting beams is a lawsuit waiting to happen.”",
+      C: "“We’ll fix roads, bridges, and systems with real engineering. Not deli agendas or flexing.”",
+      D: "“I’ll rebuild America’s infrastructure with power and precision. No shortcuts.”"
+    },
+    points: { A:2, B:4, C:3, D:1 }
+  },
+  {
+    id:7, title:"TECHNOLOGY & AI",
+    moderator: "“What is your stance on emerging technology and AI?”",
+    green: "“I tried one of those new electronic slicers. It cut everything sideways and cost me a whole afternoon of angry customers. Technology is fine, IF it knows how to slice salami properly!”",
+    murray: "“My friend Bently once hacked a traffic light while running from cops. I mean wheeling away from the cops since I accidently caused him to break his legs. Of course, I had to drive my van to pick him up. The van has a lot of cool features like traveling back in time. Technically that makes me a tech expert. So I support AI especially if it helps me find fresher donuts.”",
+    jeb: "“We should promote innovation while staying responsible.”",
+    choices: {
+      A: "“Mr. Green’s terrified of technology because he messed up his salami. Maybe don’t run national tech policy like a deli counter.”",
+      B: "“Murray talking about a friend hacking traffic lights to escape police doesn’t make him a tech expert.”",
+      C: "“I’ll use tech responsibly with innovation guided by intelligence, not panic or crime sprees.”",
+      D: "“My administration will lead in technology, boldly and responsibly.”"
+    },
+    points: { A:2, B:3, C:2, D:4 }
+  },
+  {
+    id:8, title:"NATIONAL SECURITY",
+    moderator: "“How will you ensure national security?”",
+    green: "“I’ve dealt with thieves trying to break into my shop as they usually go after my safe. If we secure stores like mine, the whole country will be a lot safer. Step one: lock the back door!”",
+    murray: "“The Murray is a master of evading security systems. So who better to strengthen them? I know exactly how people break in. I’ve done it like… sixteen times.”",
+    jeb: "“A strong military and intelligence network is necessary.”",
+    choices: {
+      A: "“Green thinks national security starts at his shop’s back door. Actually, it starts with a real strategy.”",
+      B: "“Murray bragging about breaking into secure areas is exactly why we need stronger security.”",
+      C: "“I’ll strengthen defense, intelligence, and security policy with smart, modern measures.”",
+      D: "“My national security plan will be decisive by being strong enough to keep threats far away.”"
+    },
+    points: { A:4, B:3, C:2, D:1 }
+  },
+  {
+    id:9, title:"IMMIGRATION",
+    moderator: "“What is your plan on immigration?”",
+    green: "“Immigrants come into my shop all the time. They buy meat, they pay on time, and they don’t complain about prices. Let in the ones who behave, that’s my policy!”",
+    murray: "“The Murray says: if someone can carry a donut box bigger than their head, let ’em in! And if they can’t? Well, I can teach them. For a price.”",
+    jeb: "“We need a balanced immigration policy with lawful entry.”",
+    choices: {
+      A: "“Mr. Green’s immigration policy changes based on who buys meat from him. That’s not how a country works.”",
+      B: "“Murray wants immigration tests based on donut lifting. That’s… something. Not good, but something.”",
+      C: "“I’ll use fairness and strategy. We will have secure borders, opportunities for lawful entry, and a clear policy.”",
+      D: "“My immigration leadership will be firm, fair, and absolutely effective.”"
+    },
+    points: { A:1, B:2, C:3, D:4 }
+  },
+  {
+    id:10, title:"LEGACY & VISION",
+    moderator: "“What legacy do you hope to leave as the potential 48th president?”",
+    green: "“I want people to remember me as a simple shopkeeper who fought every health inspector who dared step foot in my store. My legacy? A cleaner, more efficient butcher shop!”",
+    murray: "“My legacy? Being the strongest president ever! Also the first to outrun federal agents and wave from the Oval Office on the same day.”",
+    jeb: "“I hope to leave a stable and prosperous nation. I think I will bring lots of energy to our country as it's a tough business.”",
+    choices: {
+      A: "“Mr. Green’s legacy would be a decade-long argument with health inspectors.”",
+      B: "“Murray’s legacy would be a presidential library full of stolen items.”",
+      C: "“My legacy will be progress. We will have real improvements, real stability, and real leadership.”",
+      D: "“I’ll leave behind the greatest legacy in presidential history that every American citizen will remember forever. Oh, and Jeb has low energy.”"
+    },
+    points: { A:1, B:1, C:3, D:4 }
+  }
+];
+
+
+
+
+
+
+
+/* Opponent baseline scores so they progress each round */
+const OPPONENT_SCORES = { green:[2,2,3,4,4,3,3,2,3,4], murray:[1,1,4,2,3,1,4,4,2,3], jeb:[0,0,0,0,1,0,0,0,1,0] };
+
+/* Game state */
+let state = { idx:0, you:0, green:0, murray:0, jeb:0, phase:0, // phase: 0 moderator shown, 1 green shown, 2 murray, 3 jeb, 4 choices
+  timer:null, seconds:45 };
+
+/* DOM refs */
+const cutscene = document.getElementById('cutscene');
+const menu = document.getElementById('menu');
+const how = document.getElementById('how');
+const game = document.getElementById('game');
+const finalPanel = document.getElementById('finalPanel');
+
+
+/* screen switcher function */
+function showScreen(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  screen.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'instant' }); // ensures no leftover scroll
+}
+
+
+const goToMenuBtn = document.getElementById('goToMenuBtn');
+const startBtn = document.getElementById('startBtn');
+const howBtn = document.getElementById('howBtn');
+document.getElementById('startBtn').addEventListener('click', () => {
+  showScreen(document.getElementById('game')); // show game screen
+  window.scrollTo({ top: 0, behavior: 'instant' }); // scroll to top
+});
+
+const howBack = document.getElementById('howBack');
+document.getElementById('howBack').addEventListener('click', () => {
+  showScreen(document.getElementById('menu')); // back to main menu
+});
+
+const nextSpeakerBtn = document.getElementById('nextSpeaker');
+
+const moderatorText = document.getElementById('moderatorText');
+const lineGreen = document.getElementById('lineGreen');
+const lineMurray = document.getElementById('lineMurray');
+const lineJeb = document.getElementById('lineJeb');
+
+const panelTitle = document.getElementById('panelTitle');
+const panelHint = document.getElementById('panelHint');
+const panelText = document.getElementById('panelText');
+
+const choicesArea = document.getElementById('choicesArea');
+const choiceA = document.getElementById('choiceA');
+const choiceB = document.getElementById('choiceB');
+const choiceC = document.getElementById('choiceC');
+const choiceD = document.getElementById('choiceD');
+
+const timerWrap = document.getElementById('timerWrap');
+const timerNum = document.getElementById('timerNum');
+
+const resultPanel = document.getElementById('resultPanel');
+const roundMsg = document.getElementById('roundMsg');
+const barYou = document.getElementById('barYou');
+const barGreen = document.getElementById('barGreen');
+const barMurray = document.getElementById('barMurray');
+const barJeb = document.getElementById('barJeb');
+const valYou = document.getElementById('valYou');
+const valGreen = document.getElementById('valGreen');
+const valMurray = document.getElementById('valMurray');
+const valJeb = document.getElementById('valJeb');
+const continueBtn = document.getElementById('continueBtn');
+
+const finalTitle = document.getElementById('finalTitle');
+const finalText = document.getElementById('finalText');
+const menuBtn = document.getElementById('menuBtn');
+const playAgainBtn = document.getElementById('playAgainBtn');
+
+/* helpers to switch screens */
+function showScreen(node) {
+  const screens = document.querySelectorAll('.screen');
+
+  screens.forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+
+  node.classList.add('active');
+  node.style.display = 'block';
+
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+
+/* initialize */
+goToMenuBtn.addEventListener('click', ()=> { showScreen(menu); });
+howBtn.addEventListener('click', ()=> { showScreen(how); how.style.display='block'; });
+howBack.addEventListener('click', ()=> { showScreen(menu); });
+startBtn.addEventListener('click', ()=> { startGame(); });
+
+/* start or restart game */
+function startGame(){
+  showScreen(game);
+  document.getElementById('game').style.display='block';
+  state.idx = 0; state.you = 0; state.green = 0; state.murray = 0; state.jeb = 0; state.phase = 0;
+  updateRound();
+}
+
+function highlightSpeaker(candidateId) {
+    const allCandidates = ['imgGreen', 'imgMurray', 'imgDog', 'imgJeb'];
+    allCandidates.forEach(id => {
+        document.getElementById(id).classList.remove('highlight');
+    });
+    if(candidateId) {
+        document.getElementById(candidateId).classList.add('highlight');
+    }
+}
+
+function showSpeakerLine(candidateId, textElement, text) {
+    // Reveal line text
+    textElement.textContent = text;
+    textElement.style.fontSize = '14px';
+
+    // Highlight the speaker
+    highlightSpeaker(candidateId);
+}
+
+/* next speaker flow */
+nextSpeakerBtn.addEventListener('click', ()=> {
+  // Remove previous highlights at the start of every click
+  highlightSpeaker(null);
+
+  if(state.phase === 0){
+    // reveal green
+    lineGreen.classList.add('visible');
+    panelHint.textContent = 'Mr. Green';
+    panelText.textContent = QUESTIONS[state.idx].green;
+    highlightSpeaker('imgGreen'); // highlight Green
+    state.phase = 1;
+  } else if(state.phase === 1){
+    // reveal murray
+    lineMurray.classList.add('visible');
+    panelHint.textContent = 'Murray';
+    panelText.textContent = QUESTIONS[state.idx].murray;
+    highlightSpeaker('imgMurray'); // highlight Murray
+    state.phase = 2;
+  } else if(state.phase === 2){
+    // reveal jeb
+    lineJeb.classList.add('visible');
+    panelHint.textContent = 'Jeb Bush';
+    panelText.textContent = QUESTIONS[state.idx].jeb;
+    highlightSpeaker('imgJeb'); // highlight Jeb
+    state.phase = 3;
+    nextSpeakerBtn.textContent = 'Answer';
+  } else if(state.phase === 3){
+    // reveal choices & start timer
+    panelHint.textContent = 'Your Turn';
+    panelText.textContent = 'Choose your response.';
+    highlightSpeaker(null); // turn off highlights
+    revealChoices();
+    state.phase = 4;
+    nextSpeakerBtn.disabled = true;
+  }
+});
+
+
+/* update UI for current round & reset visibility */
+function updateRound(){
+  const q = QUESTIONS[state.idx];
+  panelTitle.textContent = `Question ${state.idx+1} — ${q.title}`;
+  panelHint.textContent = 'Moderator';
+  panelText.textContent = q.moderator;
+  panelText.style.fontSize = '14px';
+
+
+  moderatorText.textContent = q.moderator;
+  moderatorText.style.fontSize = '14px';
+
+  // populate hidden speaker lines (set texts but hide)
+  lineGreen.querySelector('.text').textContent = q.green;
+  lineGreen.querySelector('.text').style.fontSize = '14px';
+
+  lineMurray.querySelector('.text').textContent = q.murray;
+  lineMurray.querySelector('.text').style.fontSize = '14px';
+
+  lineJeb.querySelector('.text').textContent = q.jeb;
+  lineJeb.querySelector('.text').style.fontSize = '14px';
+
+
+
+
+
+
+
+  
+
+  
+
+  [lineGreen,lineMurray,lineJeb].forEach(el => { el.classList.remove('visible'); });
+
+  // choices text
+  choiceA.textContent = 'A. ' + q.choices.A;
+  choiceB.textContent = 'B. ' + q.choices.B;
+  choiceC.textContent = 'C. ' + q.choices.C;
+  choiceD.textContent = 'D. ' + q.choices.D;
+
+  // hide choices, timer, results
+  choicesArea.style.display = 'none';
+  timerWrap.style.display = 'none';
+  resultPanel.style.display = 'none';
+
+  // phase = 0 (moderator shown), enable Next to reveal Green next
+  state.phase = 0;
+  nextSpeakerBtn.disabled = false;
+  nextSpeakerBtn.textContent = 'Next';
+}
+
+
+/* reveal choices */
+function revealChoices(){
+  choicesArea.style.display = 'block';
+  timerWrap.style.display = 'flex';
+  // enable & reset focus style
+  [choiceA, choiceB, choiceC, choiceD].forEach(btn => {
+    btn.disabled = false;
+    btn.classList.remove('focused');
+  });
+  // focus first
+  setFocused(choiceA);
+  startTimer();
+}
+
+/* timer control */
+function startTimer(){
+  clearInterval(state.timer);
+  state.seconds = 45;
+  timerNum.textContent = state.seconds;
+  state.timer = setInterval(()=> {
+    state.seconds--;
+    if(state.seconds < 0){ clearInterval(state.timer); submitAnswer(null, 'timeout'); return; }
+    timerNum.textContent = state.seconds;
+  }, 1000);
+}
+
+/* choice selection handling */
+function disableChoices(){ [choiceA,choiceB,choiceC,choiceD].forEach(b => b.disabled = true); clearInterval(state.timer); }
+
+choiceA.addEventListener('click', ()=> submitAnswer('A'));
+choiceB.addEventListener('click', ()=> submitAnswer('B'));
+choiceC.addEventListener('click', ()=> submitAnswer('C'));
+choiceD.addEventListener('click', ()=> submitAnswer('D'));
+
+/* keyboard navigation + quick keys */
+let focusIndex = 0;
+const choicesArr = [choiceA,choiceB,choiceC,choiceD];
+function setFocused(el){
+  choicesArr.forEach(b => b.classList.remove('focused'));
+  el.classList.add('focused');
+  el.focus();
+  focusIndex = choicesArr.indexOf(el);
+}
+
+document.addEventListener('keydown', (e) => {
+  if(document.getElementById('game').classList.contains('active') && choicesArea.style.display === 'block' && resultPanel.style.display === 'none'){
+    if(e.key === 'ArrowRight' || e.key === 'ArrowDown'){ focusIndex = (focusIndex + 1) % choicesArr.length; setFocused(choicesArr[focusIndex]); e.preventDefault(); }
+    if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){ focusIndex = (focusIndex - 1 + choicesArr.length) % choicesArr.length; setFocused(choicesArr[focusIndex]); e.preventDefault(); }
+    if(e.key === 'Enter'){ choicesArr[focusIndex].click(); e.preventDefault(); }
+    if(e.key === '1') choiceA.click();
+    if(e.key === '2') choiceB.click();
+    if(e.key === '3') choiceC.click();
+    if(e.key === '4') choiceD.click();
+  }
+});
+
+/* scoring and result display */
+function submitAnswer(choice, mode='selected'){
+  disableChoices();
+  const q = QUESTIONS[state.idx];
+  let earned = 0;
+
+  if (!choice) earned = 0;
+  else earned = q.points[choice] || 0;
+
+  // quality text
+  let quality = '';
+  if(!choice) quality = 'Time expired.';
+  else if(earned >= 4) quality = 'Excellent choice - strong, presidential.';
+  else if(earned === 3) quality = 'Good choice - confident and solid.';
+  else if(earned === 2) quality = 'Fair choice - could be sharper.';
+  else quality = 'Weak choice - not ideal for a presidential debate.';
+
+  // scoring
+  state.you += earned;
+  state.green += OPPONENT_SCORES.green[state.idx];
+  state.murray += OPPONENT_SCORES.murray[state.idx];
+  state.jeb += OPPONENT_SCORES.jeb[state.idx];
+
+  // show Round Results screen
+  showScreen(document.getElementById('roundResults'));
+
+  const maxVal = Math.max(state.you, state.green, state.murray, state.jeb, 1);
+
+  document.getElementById('resBarYou').style.width = (state.you/maxVal*100)+'%';
+  document.getElementById('resBarGreen').style.width = (state.green/maxVal*100)+'%';
+  document.getElementById('resBarMurray').style.width = (state.murray/maxVal*100)+'%';
+  document.getElementById('resBarJeb').style.width = (state.jeb/maxVal*100)+'%';
+
+  document.getElementById('resValYou').textContent = state.you;
+  document.getElementById('resValGreen').textContent = state.green;
+  document.getElementById('resValMurray').textContent = state.murray;
+  document.getElementById('resValJeb').textContent = state.jeb;
+
+  document.getElementById('resMsg').textContent =
+      `${quality} You earned ${earned} point${earned!==1?'s':''} this round.`;
+
+  // → IMPORTANT: increment AFTER results appear
+  state.idx++;
+
+  const nextBtn = document.getElementById('nextRoundBtn');
+
+  if (state.idx >= QUESTIONS.length) {
+      nextBtn.textContent = "View Final Results";
+  } else {
+      nextBtn.textContent = "Next Question";
+  }
+
+  nextBtn.onclick = () => {
+      if (state.idx >= QUESTIONS.length) {
+          showFinal();
+      } else {
+          showScreen(game);
+          updateRound();
+      }
+  };
+}
+
+/* === FINAL SCREEN HANDLER === */
+function showFinal() {
+  // show the final screen
+  showScreen(finalPanel);
+
+  const you = state.you;
+  const g = state.green;
+  const m = state.murray;
+  const j = state.jeb;
+
+  let winner = 'You';
+  if (g > you && g >= m && g >= j) winner = 'Mr. Green';
+  else if (m > you && m >= g && m >= j) winner = 'Murray';
+  else if (j > you && j >= g && j >= m) winner = 'Jeb Bush';
+
+  // update text
+  if (winner === 'You') {
+    finalTitle.textContent = "🎉 You Won the Election!";
+    finalText.textContent = `Victory! You finished with ${you} points. It is with great honor to officically announce that Madame Daisy DeShrimpo has won the 2028 presidential election and has officially been nominated as the 48th president of the United States. Not only is Daisy the first ever female president, but she is also the first ever dog to ever pull it off. President DeShrimpo had quite a historic campaign that featured bold promises, unstoppable confidence, and several inspirational speeches that won the entire animal population. Here is a closing quote from the president: "Thank you America! Me and vice President Rugby promise to lead this country with courage, common sense, and to provide free treats for everyone!" The secret code is 310W.`;
+  } else {
+    finalTitle.textContent = "❌ You Lost the Election";
+    finalText.textContent = `You finished with ${you} points. Thus, it is with great honor, I guess, to officially announce that ${winner} has won the 2028 presidential election and has been nominated as the 48th president of the United States. Mr. Green’s campaign was quite historic: once the owner of a small deli in a struggling neighborhood, he was encouraged to run for president by some football-headed kid and that kid’s friends from PS 118, whose series of viral videos helped launch Green’s campaign trail. Here is a closing quote from the president: "Thank you America! The first thing I will do is ban all vegan foods as we need more meat! Furthermore, I will also pardon Scheck and Nick Vermicelli, plus sue Bob Pataki for being a scam and con-artist! And son, if you are watching this. You will eat meat, and you will be happy."`;
+  }
+
+  // make sure final panel is visible
+  finalPanel.style.display = "block";
+
+  // ensure the dialogue (left panel) is restored for next game
+  document.getElementById('dialogue').style.display = "";
+}
+
+
+/* final screen buttons */
+menuBtn.addEventListener('click', () => {
+  // return to main menu
+  finalPanel.style.display = 'none';
+  showScreen(menu);
+});
+
+playAgainBtn.addEventListener('click', () => {
+  // restart game cleanly
+  finalPanel.style.display = 'none';
+  startGame();
+});
+
+
+</script>
+
+
+<audio id="menuMusic" loop>
+    <source src="Tense Debate.mp3" type="audio/mpeg">
+</audio>
+
+
+</script>
+
+<!-- MENU MUSIC — ADD THIS HERE -->
+<audio id="menuMusic" src="TenseDebate.mp3" loop preload="auto"></audio>
+
+<script>
+// guaranteed music start after first user click
+let musicStarted = false;
+
+function startMenuMusic() {
+  if (musicStarted) return;
+  const music = document.getElementById("menuMusic");
+  music.volume = 0.55;
+  music.play().catch(err => console.log("Autoplay blocked:", err));
+  musicStarted = true;
+}
+
+// any user click starts music (across all screens)
+window.addEventListener("click", startMenuMusic);
+
+// also start when returning to menu AFTER first click
+const menuScreen = document.getElementById("menu");
+const observer = new MutationObserver(() => {
+  if (menuScreen.classList.contains("active")) {
+    startMenuMusic();
+  }
+});
+observer.observe(menuScreen, { attributes: true });
+</script>
+
+
+
+
+</body>
+</html>
