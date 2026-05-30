@@ -517,7 +517,7 @@
     .cert-card {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 16px 20px;
-      transition: border-color 0.2s, transform 0.2s;
+      transition: none;
       cursor: pointer; /* Added pointer cursor for clickable cards */
     }
     .cert-card:hover { border-color: var(--accent3); transform: translateY(-2px); }
@@ -849,6 +849,7 @@
     
     .env-modal-overlay.open .env-paper {
       transform: translateY(-200px);
+      z-index: 10;
     }
     .env-modal-overlay.open .env-paper img {
       transform: scale(2.5);
