@@ -838,37 +838,37 @@
       background: #151d26; border: 1px solid var(--accent); border-radius: 8px 8px 0 0;
       clip-path: polygon(0 0, 100% 0, 50% 100%);
       transform-origin: top;
-      transition: transform 0.5s ease 0.1s;
+      transition: transform 0.4s ease 0.5s;
     }
     .env-modal-overlay.open .env-flap {
       transform: rotateX(180deg);
       z-index: 1;
-      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0s;
+      transition: transform 0.4s ease 0s;
     }
 
     .env-paper {
       position: absolute; left: 10px; right: 10px; bottom: 10px; top: 10px;
       z-index: 2;
       opacity: 0;
-      transition: all 0.5s ease 0s, z-index 0s opacity 0s linear 0.45s;
+      transition: transform 0.5s ease 0s, z-index 0s linear 0.5s, opacity 0s linear 0.5s;
       display: flex; align-items: flex-end; justify-content: center;
     }
     .env-paper img {
       width: 100%; border-radius: 4px; box-shadow: 0 0 0 rgba(0,0,0,0);
-      transition: all 0.5s ease 0s;
+      transition: transform 0.5s ease 0s;
     }
     
     .env-modal-overlay.open .env-paper {
       transform: translateY(-200px);
       z-index: 10;
       opacity: 1;
-      transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0s, z-index 0s linear 0s, opacity 0s linear 0s;
+      transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s, z-index 0s linear 0.4s, opacity 0s linear 0.4s;
     }
     .env-modal-overlay.open .env-paper img {
       transform: scale(2.5);
       box-shadow: 0 20px 50px rgba(0,229,255,0.4);
       border: 2px solid var(--accent);
-      transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0s;
+      transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.4s;
     }
 
     /* ── MOBILE ── */
@@ -1915,7 +1915,7 @@ function closeCertEnvelope() {
   // Wait for the paper to slide back in and flap to close before hiding overlay
   setTimeout(() => {
     modal.classList.remove('active');
-  }, 550); 
+  }, 900); 
 }
 </script>
 
